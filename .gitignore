@@ -35,6 +35,12 @@ lerna-debug.log*
 !.vscode/launch.json
 !.vscode/extensions.json
 
+# IDE - windsurf
+.windsurf/
+
+.claude/
+.agents/
+
 # dotenv environment variable files
 .env
 .env.development.local
@@ -54,3 +60,9 @@ pids
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+
+## Environmental variables
+.env
+/generated/prisma
+/generated/
