@@ -1,4 +1,4 @@
-enum Gender {
+enum ENGender {
   MALE
   FEMALE
 }
@@ -7,7 +7,7 @@ model Person {
   id             String   @id @default(cuid())
   firstName      String   @map("first_name")
   lastName       String   @map("last_name")
-  gender         Gender
+  gender         ENGender
   dob            DateTime
   nationality    String
   profilePicture String?  @map("profile_picture")
@@ -40,7 +40,7 @@ model User {
   @@map("users")
 }
 
-enum UserTokenType {
+enum ENUserTokenType {
   EMAIL_VERIFICATION
   CHANGE_PASSWORD
   INVITATION
@@ -48,7 +48,7 @@ enum UserTokenType {
 
 model UserToken {
   id        String        @id @default(cuid())
-  type      UserTokenType
+  type      ENUserTokenType
   hash      String
 
   expiresAt DateTime  @map("expires_at")
@@ -63,14 +63,14 @@ model UserToken {
   @@map("user_tokens")
 }
 
-enum MembershipStatus {
+enum ENMembershipStatus {
   PENDING
   ACTIVE
   SUSPENDED
   ENDED
 }
 
-enum MembershipType {
+enum ENMembershipType {
   PERSONNEL
   ATHLETE
   GUARDIAN
@@ -80,8 +80,8 @@ enum MembershipType {
 model Membership {
   id String @id @default(cuid())
 
-  status MembershipStatus @default(ACTIVE)
-  type MembershipType
+  status ENMembershipStatus @default(ACTIVE)
+  type ENMembershipType
 
   joinedAt DateTime @map("joined_at")
   endedAt DateTime? @map("ended_at")
@@ -107,7 +107,7 @@ model Membership {
   @@map("memberships")
 }
 
-enum PermissionModule {
+enum ENPermissionModule {
   ACCESS
   TRAINING
   PLAYER
@@ -116,7 +116,7 @@ enum PermissionModule {
   MATCH
 }
 
-enum PermissionAction {
+enum ENPermissionAction {
   CREATE
   READ
   UPDATE
@@ -133,8 +133,8 @@ model Permission {
   name        String
   description String
 
-  module PermissionModule
-  action PermissionAction
+  module ENPermissionModule
+  action ENPermissionAction
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -163,7 +163,7 @@ model Role {
   @@map("roles")
 }
 
-enum PermissionScope {
+enum ENPermissionScope {
   ANY
   CLUB
   TEAM
@@ -179,7 +179,7 @@ model RolePermission {
   permissionId String @map("permission_id")
   permission   Permission @relation(fields: [permissionId], references: [id])
 
-  scope PermissionScope
+  scope ENPermissionScope
 
   @@unique([roleId, permissionId, scope])
 
@@ -195,7 +195,7 @@ model MembershipPermission {
   permissionId String @map("permission_id")
   permission   Permission @relation(fields: [permissionId], references: [id])
 
-  scope PermissionScope
+  scope ENPermissionScope
 
   @@unique([membershipId, permissionId, scope])
 
@@ -221,7 +221,7 @@ model MembershipRole {
   @@map("membership_roles")
 }
 
-enum ClubStatus {
+enum ENClubStatus {
   ACTIVE
   INACTIVE
   DELETED
@@ -235,7 +235,7 @@ model Club {
   country String
   createdById String? @map("created_by")
   createdBy Membership? @relation("ClubCreator", fields: [createdById], references: [id])
-  status ClubStatus @default(ACTIVE)
+  status ENClubStatus @default(ACTIVE)
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

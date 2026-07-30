@@ -43,6 +43,8 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "graphql": "^16.14.2",
+    "i18n-iso-countries": "^7.14.0",
+    "i18n-nationality": "^1.4.0",
     "id-tools": "^1.1.0",
     "morgan": "^1.11.0",
     "passport": "^0.7.0",

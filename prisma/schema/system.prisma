@@ -1,6 +1,6 @@
 
 // we wil need an enum
-enum AuditCategory {
+enum ENAuditCategory {
   AUTH
   IAM
   CLUB
@@ -14,7 +14,7 @@ enum AuditCategory {
 
 model AuditLog {
   id String @id @default(cuid())
-  category AuditCategory
+  category ENAuditCategory
   action String
   entityType String
   entityId String

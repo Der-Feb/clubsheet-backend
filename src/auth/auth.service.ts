@@ -1,26 +1,108 @@
-import { Injectable } from '@nestjs/common';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { LoginDto, RegisterUserDto, RegisterUserPersonDto } from './auth.dto';
+import * as argon2 from 'argon2';
+import { Prisma } from '@prisma/client';
+import { parsePrismaError } from '../common/error-handler/error-handler';
 
 @Injectable()
 export class AuthService {
-  create(createAuthDto: CreateAuthDto) {
-    return 'This action adds a new auth';
-  }
+    constructor(private readonly prisma: PrismaService) {}
 
-  findAll() {
-    return `This action returns all auth`;
-  }
+    public async ensurePersonAccountExists(email: string) {
+        if (await this.prisma.user.findUnique({ where: { email } })) 
+            return true;
+        return false;
+    }
 
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
-  }
+    public async ensurePersonExists(person_id: string) {
+        if (await this.prisma.person.findUnique({ where: { id: person_id } })) 
+            return true;
+        return false;
+    }
 
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    return `This action updates a #${id} auth`;
-  }
+    public async register(person_id: string, registerDto: RegisterUserDto) {
+        if (await this.ensurePersonAccountExists(registerDto.email)) {
+            throw new ConflictException('Person with that email account already exists');
+        }
+        if (!await this.ensurePersonExists(person_id)) {
+            throw new BadRequestException('Person with that id does not exist');
+        }
 
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
-  }
+        const hashedPassword = await argon2.hash(registerDto.password);
+        try {
+            await this.prisma.$transaction(async(tx) => {
+                return await tx.user.create({
+                    data: {
+                        personId: person_id,
+                        email: registerDto.email,
+                        passwordHash: hashedPassword,
+                    }
+                });
+            });
+        } catch (error) {
+            if(error instanceof Prisma.PrismaClientKnownRequestError)
+                throw new BadRequestException(parsePrismaError(error));
+
+            throw new BadRequestException("Unkown Error");
+        }
+        
+        return { message: "Registration successful" };
+    }
+
+    public async registerUserPerson(registerDto: RegisterUserPersonDto) {
+        if (await this.ensurePersonAccountExists(registerDto.email)) {
+            throw new ConflictException('Person with that email account already exists');
+        }
+
+        const hashedPassword = await argon2.hash(registerDto.password);
+        try {
+            await this.prisma.$transaction(async(tx) => {
+                return await tx.user.create({
+                    data: {
+                        email: registerDto.email,
+                        passwordHash: hashedPassword,
+                        person: {
+                            create: {
+                                firstName: registerDto.firstName,
+                                lastName: registerDto.lastName,
+                                dob: registerDto.dob,
+                                nationality: registerDto.nationality,
+                                gender: registerDto.gender,
+                            },
+                        },
+                    }, include: { person: true }
+                });
+            });
+        } catch (error) {
+            if(error instanceof Prisma.PrismaClientKnownRequestError)
+                throw new BadRequestException(parsePrismaError(error));
+
+            throw new BadRequestException("Unkown Error");
+        }
+        
+        return { message: "Registration successful" };
+    }
+
+    public async login(loginDto: LoginDto) {
+        const user = await this.prisma.user.findUnique({
+            where: { email: loginDto.email },
+            include: { person: true },
+        });
+
+        if (!user) throw new UnauthorizedException('Invalid email or password');
+
+        const validPassword = await argon2.verify(
+            user.passwordHash, loginDto.password,
+        );
+
+        if (!validPassword) throw new UnauthorizedException('Invalid email or password');
+
+        await this.prisma.user.update({
+            where: { id: user.id },
+            data: { lastLogin: new Date() },
+        });
+
+        return { message: 'Login successful' };
+    }
 }
