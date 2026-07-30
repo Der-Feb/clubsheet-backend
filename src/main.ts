@@ -17,9 +17,9 @@ async function bootstrap() {
     }),
   );
 
-  app.use(morgan("combined", { stream: { write: (message: string) => appLogger.log(message.trim()) } }));
+  app.use(morgan("dev", { stream: { write: (message: string) => appLogger.log(message.trim()) } }));
 
   await app.listen(port);
-  appLogger.log("Server started on http://localhost:" + 3000);
+  appLogger.log("Server started on http://localhost:" + port);
 }
 bootstrap();

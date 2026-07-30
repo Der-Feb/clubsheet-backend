@@ -1,18 +1,15 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from './prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
-import { GraphQLModule } from '@nestjs/graphql';
-import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
-import { IamModule } from './iam/iam.module';
+import { GraphqlModule } from './graphql/graphql.module';
+import { AppResolver } from './app.resolver';
 
 @Module({
   imports: [
     PrismaModule,
     ConfigModule.forRoot({ isGlobal: true, }),
-    GraphQLModule.forRoot<ApolloDriverConfig>({
-      driver: ApolloDriver,
-    }),
-    IamModule,
+    GraphqlModule,
   ],
+  providers: [AppResolver],
 })
 export class AppModule {}
