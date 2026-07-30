@@ -1,0 +1,247 @@
+enum Gender {
+  MALE
+  FEMALE
+}
+
+model Person {
+  id             String   @id @default(cuid())
+  firstName      String   @map("first_name")
+  lastName       String   @map("last_name")
+  gender         Gender
+  dob            DateTime
+  nationality    String
+  profilePicture String?  @map("profile_picture")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user        User?
+  memberships Membership[]
+
+  @@map("persons")
+}
+
+model User {
+  id             String  @id @default(cuid())
+  email          String  @unique
+  passwordHash   String  @map("password_hash")
+
+  emailVerified  DateTime? @map("email_verified")
+  lastLogin      DateTime? @map("last_login")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  personId String @unique @map("person_id")
+  person   Person @relation(fields: [personId], references: [id])
+
+  tokens UserToken[]
+
+  @@map("users")
+}
+
+enum UserTokenType {
+  EMAIL_VERIFICATION
+  CHANGE_PASSWORD
+  INVITATION
+}
+
+model UserToken {
+  id        String        @id @default(cuid())
+  type      UserTokenType
+  hash      String
+
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([hash])
+
+  @@map("user_tokens")
+}
+
+enum MembershipStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  ENDED
+}
+
+enum MembershipType {
+  PERSONNEL
+  ATHLETE
+  GUARDIAN
+  BOARD
+}
+
+model Membership {
+  id String @id @default(cuid())
+
+  status MembershipStatus @default(ACTIVE)
+  type MembershipType
+
+  joinedAt DateTime @map("joined_at")
+  endedAt DateTime? @map("ended_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  personId String @map("person_id")
+  person Person @relation(fields: [personId], references: [id])
+
+  clubId String @map("club_id")
+  club Club @relation("ClubMemberships", fields: [clubId], references: [id])
+
+  roles MembershipRole[]
+  permissions MembershipPermission[]
+  assignedRoles MembershipRole[] @relation("AssignedRoles")
+  createdClubs Club[] @relation("ClubCreator")
+
+  @@index([personId])
+  @@index([clubId])
+  @@index([status])
+
+  @@map("memberships")
+}
+
+enum PermissionModule {
+  ACCESS
+  TRAINING
+  PLAYER
+  MEDICAL
+  FINANCE
+  MATCH
+}
+
+enum PermissionAction {
+  CREATE
+  READ
+  UPDATE
+  DELETE
+  APPROVE
+  EXPORT
+  ASSIGN
+}
+
+model Permission {
+  id String @id @default(cuid())
+
+  code        String @unique
+  name        String
+  description String
+
+  module PermissionModule
+  action PermissionAction
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  rolePermissions       RolePermission[]
+  membershipPermissions MembershipPermission[]
+
+  @@map("permissions")
+}
+
+model Role {
+  id String @id @default(cuid())
+
+  code        String @unique
+  name        String
+  description String
+
+  isSystem Boolean @default(true) @map("is_system")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  memberships MembershipRole[]
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+enum PermissionScope {
+  ANY
+  CLUB
+  TEAM
+  OWN
+}
+
+model RolePermission {
+  id String @id @default(cuid())
+
+  roleId String @map("role_id")
+  role   Role   @relation(fields: [roleId], references: [id])
+
+  permissionId String @map("permission_id")
+  permission   Permission @relation(fields: [permissionId], references: [id])
+
+  scope PermissionScope
+
+  @@unique([roleId, permissionId, scope])
+
+  @@map("role_permissions")
+}
+
+model MembershipPermission {
+  id String @id @default(cuid())
+
+  membershipId String @map("membership_id")
+  membership   Membership @relation(fields: [membershipId], references: [id])
+
+  permissionId String @map("permission_id")
+  permission   Permission @relation(fields: [permissionId], references: [id])
+
+  scope PermissionScope
+
+  @@unique([membershipId, permissionId, scope])
+
+  @@map("membership_permissions")
+}
+
+model MembershipRole {
+  id String @id @default(cuid())
+
+  membershipId String @map("membership_id")
+  membership   Membership @relation(fields: [membershipId], references: [id])
+
+  roleId String @map("role_id")
+  role   Role   @relation(fields: [roleId], references: [id])
+
+  assignedById String? @map("assigned_by")
+  assignedBy   Membership? @relation("AssignedRoles", fields: [assignedById], references: [id])
+
+  assignedAt DateTime @default(now()) @map("assigned_at")
+
+  @@unique([membershipId, roleId])
+
+  @@map("membership_roles")
+}
+
+enum ClubStatus {
+  ACTIVE
+  INACTIVE
+  DELETED
+}
+
+model Club {
+  id String @id @default(cuid())
+  name String
+  shortName String? @map("short_name")
+  logo String?
+  country String
+  createdById String? @map("created_by")
+  createdBy Membership? @relation("ClubCreator", fields: [createdById], references: [id])
+  status ClubStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  memberships Membership[] @relation("ClubMemberships")
+
+  @@index([createdById])
+  @@map("clubs")
+}

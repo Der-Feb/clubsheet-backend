@@ -1,0 +1,25 @@
+
+// we wil need an enum
+enum AuditCategory {
+  AUTH
+  IAM
+  CLUB
+  PLAYER
+  TRAINING
+  MATCH
+  MEDICAL
+  FINANCE
+  SYSTEM
+}
+
+model AuditLog {
+  id String @id @default(cuid())
+  category AuditCategory
+  action String
+  entityType String
+  entityId String
+
+  metadata Json?
+
+  createdAt DateTime @default(now())
+}
