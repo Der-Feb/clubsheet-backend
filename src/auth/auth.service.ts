@@ -3,10 +3,11 @@ import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto, RegisterUserDto, RegisterUserPersonDto } from './auth.dto';
 import * as argon2 from 'argon2';
 import { Prisma, User } from '@prisma/client';
-import { parsePrismaError } from '../common/error-handler/error-handler';
+import { parsePrismaError } from '../common/utils/error-handler';
 import { JwtService } from '@nestjs/jwt';
-import { TPayload } from './auth.types';
+import { TPayload, TUserData } from './auth.types';
 import { Response } from 'express';
+import { ResourceNotFoundException } from '../common/exceptions/resource-not-found';
 
 export type TUserWithPerson = Prisma.UserGetPayload<{
   include: { person: true };
@@ -25,15 +26,12 @@ export class AuthService {
         return false;
     }
 
-    public returnSanitizedUserData(user: TUserWithPerson) {
+    public returnSanitizedUserData(user: TUserWithPerson): TUserData {
         return {           
             user_id: user.id,
             person_id: user.person.id,
             name: `${user.person.firstName} ${user.person.lastName}`,
             email: user.email,
-            dob: user.person.dob,
-            gender: user.person.gender,
-            nationality: user.person.nationality
         }
     }
 
@@ -76,6 +74,21 @@ export class AuthService {
 
             throw new BadRequestException("Unkown Error");
         }
+    }
+
+    public async getUserData(user_id: string, person_id: string) {
+        const user = await this.prisma.user.findUnique({
+            where: {
+                id: user_id,
+                person: { id: person_id }
+            },
+            include: { person: true }
+        });
+
+        if(!user)
+            throw new ResourceNotFoundException("User not found", "User");
+
+        return this.returnSanitizedUserData(user);
     }
 
     public async validateCredentials(loginDto: LoginDto) {

@@ -1,9 +1,10 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { ResourceNotFoundException } from '../exceptions/resource-not-found';
 
 @Catch()
 export class HttpExceptionFilter<T> implements ExceptionFilter {
-  catch(exception: T, host: ArgumentsHost) {
+  catch(exception: Error, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
 
     const res = ctx.getResponse<Response>();
@@ -22,8 +23,15 @@ export class HttpExceptionFilter<T> implements ExceptionFilter {
         ? exceptionResponse
         : (exceptionResponse as any).message;
 
+    const resource = exception instanceof ResourceNotFoundException
+      ? exception.resource
+      : undefined;
+
+    if (res.headersSent) return;
+
     res.send(status).json({
       success: false,
+      ...(resource && { resource: resource }),
       message,
       statusCode: status,
       timestamp: new Date().toISOString(),
