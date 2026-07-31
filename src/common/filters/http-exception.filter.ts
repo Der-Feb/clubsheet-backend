@@ -2,8 +2,8 @@ import { ArgumentsHost, Catch, ExceptionFilter, HttpException } from '@nestjs/co
 import { Request, Response } from 'express';
 import { ResourceNotFoundException } from '../exceptions/resource-not-found';
 
-@Catch()
-export class HttpExceptionFilter<T> implements ExceptionFilter {
+@Catch() // 👈 Catching all exceptions
+export class HttpExceptionFilter implements ExceptionFilter {
   catch(exception: Error, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
 
@@ -29,13 +29,13 @@ export class HttpExceptionFilter<T> implements ExceptionFilter {
 
     if (res.headersSent) return;
 
-    res.send(status).json({
+    res.status(status).json({
       success: false,
       ...(resource && { resource: resource }),
       message,
       statusCode: status,
       timestamp: new Date().toISOString(),
       path: req.url,
-    })
+    });
   }
 }

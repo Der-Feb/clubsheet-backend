@@ -69,6 +69,7 @@ export class AuthService {
 
             return this.returnSanitizedUserData(newUser);
         } catch (error) {
+            console.log(error);
             if(error instanceof Prisma.PrismaClientKnownRequestError)
                 throw new BadRequestException(parsePrismaError(error));
 
@@ -120,7 +121,7 @@ export class AuthService {
     }
 
     public async assignCookie(payload: TPayload, res: Response) {
-        const accessToken = this.generateAccessToken(payload);
+        const accessToken = await this.generateAccessToken(payload);
 
         res.cookie("accessToken", accessToken, {
             httpOnly: true, // Prevents client-side JS from reading the cookie (protects against XSS)

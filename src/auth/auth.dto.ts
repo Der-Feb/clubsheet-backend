@@ -1,7 +1,7 @@
 import { ENGender } from '@prisma/client';
 import { IntersectionType } from '@nestjs/mapped-types';
 import { IsEmail, IsString, MinLength, IsDate, MaxDate, IsEnum, IsISO31661Alpha2 } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import nationalities from 'i18n-nationality';
 import countries from 'i18n-iso-countries';
 
@@ -17,6 +17,7 @@ export class RegisteringPersonDto {
     @IsString()
     lastName!: string;
 
+    @Type(() => Date)
     @IsDate()
     @MaxDate(() => new Date(), { message: 'Date of birth cannot be in the future' })
     dob!: Date;
