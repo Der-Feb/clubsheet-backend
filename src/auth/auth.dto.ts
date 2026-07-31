@@ -11,15 +11,15 @@ countries.registerLocale(require('i18n-iso-countries/langs/en.json'));
 export class RegisteringPersonDto {
     @Transform(({ value }) => value?.trim().toLowerCase())
     @IsString()
-    firstName: string;
+    firstName!: string;
 
     @Transform(({ value }) => value?.trim().toLowerCase())
     @IsString()
-    lastName: string;
+    lastName!: string;
 
     @IsDate()
     @MaxDate(() => new Date(), { message: 'Date of birth cannot be in the future' })
-    dob: Date;
+    dob!: Date;
 
     @IsString()
     @Transform(({ value }) => value?.trim().toLowerCase())
@@ -35,21 +35,21 @@ export class RegisteringPersonDto {
         return value.toUpperCase();
     })
     @IsISO31661Alpha2({ message: "Invalid Nationality" })
-    nationality: string;
+    nationality!: string;
 
     @IsEnum(ENGender, { message: 'Gender must be Male or Female' })
-    gender: ENGender;
+    gender!: ENGender;
 }
 
 export class RegisterUserDto {
     @Transform(({ value }) => value?.trim().toLowerCase())
     @IsEmail()
-    email: string;
+    email!: string;
     
     @Transform(({ value }) => value?.trim().toLowerCase())
     @IsString()
     @MinLength(5)
-    password: string;
+    password!: string;
 }
 
 export class RegisterUserPersonDto extends IntersectionType(
@@ -58,3 +58,4 @@ export class RegisterUserPersonDto extends IntersectionType(
 ) {}
 
 export class LoginDto extends RegisterUserDto {}
+

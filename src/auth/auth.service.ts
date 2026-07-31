@@ -2,62 +2,56 @@ import { BadRequestException, ConflictException, Injectable, UnauthorizedExcepti
 import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto, RegisterUserDto, RegisterUserPersonDto } from './auth.dto';
 import * as argon2 from 'argon2';
-import { Prisma } from '@prisma/client';
+import { Prisma, User } from '@prisma/client';
 import { parsePrismaError } from '../common/error-handler/error-handler';
+import { JwtService } from '@nestjs/jwt';
+import { TPayload } from './auth.types';
+import { Response } from 'express';
+
+export type TUserWithPerson = Prisma.UserGetPayload<{
+  include: { person: true };
+}>;
 
 @Injectable()
 export class AuthService {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly jwtService: JwtService
+    ) {}
 
-    public async ensurePersonAccountExists(email: string) {
+    private async ensurePersonAccountExists(email: string) {
         if (await this.prisma.user.findUnique({ where: { email } })) 
             return true;
         return false;
     }
 
-    public async ensurePersonExists(person_id: string) {
-        if (await this.prisma.person.findUnique({ where: { id: person_id } })) 
-            return true;
-        return false;
+    public returnSanitizedUserData(user: TUserWithPerson) {
+        return {           
+            user_id: user.id,
+            person_id: user.person.id,
+            name: `${user.person.firstName} ${user.person.lastName}`,
+            email: user.email,
+            dob: user.person.dob,
+            gender: user.person.gender,
+            nationality: user.person.nationality
+        }
     }
 
-    public async register(person_id: string, registerDto: RegisterUserDto) {
-        if (await this.ensurePersonAccountExists(registerDto.email)) {
-            throw new ConflictException('Person with that email account already exists');
-        }
-        if (!await this.ensurePersonExists(person_id)) {
-            throw new BadRequestException('Person with that id does not exist');
-        }
-
-        const hashedPassword = await argon2.hash(registerDto.password);
-        try {
-            await this.prisma.$transaction(async(tx) => {
-                return await tx.user.create({
-                    data: {
-                        personId: person_id,
-                        email: registerDto.email,
-                        passwordHash: hashedPassword,
-                    }
-                });
-            });
-        } catch (error) {
-            if(error instanceof Prisma.PrismaClientKnownRequestError)
-                throw new BadRequestException(parsePrismaError(error));
-
-            throw new BadRequestException("Unkown Error");
-        }
-        
-        return { message: "Registration successful" };
-    }
-
+    /**
+     * A completely new user is going to register, we creae person - user records
+     * 
+     * @param registerDto 
+     * @returns 
+     */
     public async registerUserPerson(registerDto: RegisterUserPersonDto) {
         if (await this.ensurePersonAccountExists(registerDto.email)) {
             throw new ConflictException('Person with that email account already exists');
         }
 
         const hashedPassword = await argon2.hash(registerDto.password);
+
         try {
-            await this.prisma.$transaction(async(tx) => {
+            const newUser = await this.prisma.$transaction(async(tx) => {
                 return await tx.user.create({
                     data: {
                         email: registerDto.email,
@@ -74,17 +68,17 @@ export class AuthService {
                     }, include: { person: true }
                 });
             });
+
+            return this.returnSanitizedUserData(newUser);
         } catch (error) {
             if(error instanceof Prisma.PrismaClientKnownRequestError)
                 throw new BadRequestException(parsePrismaError(error));
 
             throw new BadRequestException("Unkown Error");
         }
-        
-        return { message: "Registration successful" };
     }
 
-    public async login(loginDto: LoginDto) {
+    public async validateCredentials(loginDto: LoginDto) {
         const user = await this.prisma.user.findUnique({
             where: { email: loginDto.email },
             include: { person: true },
@@ -98,11 +92,28 @@ export class AuthService {
 
         if (!validPassword) throw new UnauthorizedException('Invalid email or password');
 
-        await this.prisma.user.update({
-            where: { id: user.id },
-            data: { lastLogin: new Date() },
-        });
+        return this.returnSanitizedUserData(user);
+    }
 
-        return { message: 'Login successful' };
+    private async updateLastLogin(user: User) {
+        return await this.prisma.user.update({
+            where: { id: user.id },
+            data: { lastLogin: new Date() }
+        });
+    }
+
+    private async generateAccessToken(payload: TPayload) {
+        return await this.jwtService.signAsync(payload);
+    }
+
+    public async assignCookie(payload: TPayload, res: Response) {
+        const accessToken = this.generateAccessToken(payload);
+
+        res.cookie("accessToken", accessToken, {
+            httpOnly: true, // Prevents client-side JS from reading the cookie (protects against XSS)
+            secure: process.env.NODE_ENV === 'production', // Send over HTTPS only in production
+            sameSite: 'strict', // Protects against CSRF attacks
+            maxAge: 24 * 60 * 60 * 1000,
+        });
     }
 }
