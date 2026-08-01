@@ -2,12 +2,13 @@ import { BadRequestException, ConflictException, Injectable, UnauthorizedExcepti
 import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto, RegisterUserDto, RegisterUserPersonDto } from './auth.dto';
 import * as argon2 from 'argon2';
-import { Prisma, User } from '@prisma/client';
+import { ENAuditCategory, Prisma, User } from '@prisma/client';
 import { parsePrismaError } from '../common/utils/error-handler';
 import { JwtService } from '@nestjs/jwt';
 import { TPayload, TUserData } from './auth.types';
 import { Response } from 'express';
 import { ResourceNotFoundException } from '../common/exceptions/resource-not-found';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
 
 export type TUserWithPerson = Prisma.UserGetPayload<{
   include: { person: true };
@@ -17,7 +18,8 @@ export type TUserWithPerson = Prisma.UserGetPayload<{
 export class AuthService {
     constructor(
         private readonly prisma: PrismaService,
-        private readonly jwtService: JwtService
+        private readonly jwtService: JwtService,
+        private readonly auditLogsService: AuditLogsService
     ) {}
 
     private async ensurePersonAccountExists(email: string) {

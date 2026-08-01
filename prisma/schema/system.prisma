@@ -17,9 +17,10 @@ model AuditLog {
   category ENAuditCategory
   action String
   entityType String
-  entityId String
+  description String
 
   metadata Json?
 
+  createdBy String? @default("system") //user_id or system
   createdAt DateTime @default(now())
 }

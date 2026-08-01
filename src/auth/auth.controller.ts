@@ -5,10 +5,15 @@ import { Response } from 'express';
 import { PassportJwtGuard, PassportLocalGuard } from '../common/guards/passport.guard';
 import { CurrentUser } from '../common/decorators/current-user';
 import { TPayload, TUserData } from './auth.types';
+import { ENAuditCategory } from '@prisma/client';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
 
 @Controller('auth')
 export class AuthController {
-    constructor(private authService: AuthService) {}
+    constructor(
+        private authService: AuthService,
+        private auditLogsService: AuditLogsService
+    ) {}
 
     @HttpCode(HttpStatus.CREATED)
     @Post("/signup")
@@ -22,6 +27,14 @@ export class AuthController {
             sub: userData.user_id, 
             person_id: userData.person_id
         }, res);
+
+        await this.auditLogsService.createLog({
+            category: ENAuditCategory.AUTH,
+            action: 'auth-register',
+            entityType: 'User, Person',
+            createdBy: userData.user_id,
+            metadata: { person_id: userData.person_id,  user_id: userData.person_id },
+        });
 
         return {
             message: 'Registered successfully',
@@ -40,7 +53,15 @@ export class AuthController {
         await this.authService.assignCookie({
             sub: userData.user_id,
             person_id: userData.person_id
-        }, res);;
+        }, res);
+
+        await this.auditLogsService.createLog({
+            category: ENAuditCategory.AUTH,
+            action: 'auth-login',
+            entityType: 'User',
+            createdBy: userData.user_id,
+            metadata: { user_id: userData.user_id },
+        });
 
         return {
             message: "Logged in Successfully",
