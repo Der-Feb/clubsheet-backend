@@ -1,8 +1,8 @@
 import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { LoginDto, RegisterUserDto, RegisterUserPersonDto } from './auth.dto';
+import { LoginDto, RegisterUserPersonDto } from './auth.dto';
 import * as argon2 from 'argon2';
-import { ENAuditCategory, Prisma, User } from '@prisma/client';
+import { Prisma, User } from '@prisma/client';
 import { parsePrismaError } from '../common/utils/error-handler';
 import { JwtService } from '@nestjs/jwt';
 import { TPayload, TUserData } from './auth.types';

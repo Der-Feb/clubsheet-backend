@@ -13,6 +13,7 @@ export class AuditLogsService {
     entityType: string;
     metadata: Record<string, any>;
     createdBy?: string;
+    description?: string;
   }) {
     const { category, action, entityType, metadata, createdBy } = params;
 

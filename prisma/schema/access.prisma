@@ -26,7 +26,7 @@ model User {
   email          String  @unique
   passwordHash   String  @map("password_hash")
 
-  emailVerified  DateTime? @map("email_verified")
+  isEmailVerified Boolean @default(false)
   lastLogin      DateTime? @map("last_login")
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -46,6 +46,11 @@ enum ENUserTokenType {
   INVITATION
 }
 
+enum ENUserTokenStatus {
+  PENDING
+  DISRUPTED
+}
+
 model UserToken {
   id        String        @id @default(cuid())
   type      ENUserTokenType
@@ -54,8 +59,12 @@ model UserToken {
   expiresAt DateTime  @map("expires_at")
   usedAt    DateTime? @map("used_at")
 
+  status ENUserTokenStatus @default(PENDING)
+
   userId String @map("user_id")
   user   User   @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@index([userId])
   @@index([hash])

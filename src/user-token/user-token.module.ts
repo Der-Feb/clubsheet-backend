@@ -1,0 +1,13 @@
+import { Module } from '@nestjs/common';
+import { UserTokenService } from './user-token.service';
+import { AuditLogsModule } from '../audit-logs/audit-logs.module';
+import { CommunicationModule } from '../communication/communication.module';
+
+@Module({
+  imports: [
+    CommunicationModule,
+    AuditLogsModule,
+  ],
+  providers: [UserTokenService]
+})
+export class UserTokenModule {}

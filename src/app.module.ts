@@ -5,6 +5,9 @@ import { GraphqlModule } from './graphql/graphql.module';
 import { AppResolver } from './app.resolver';
 import { AuthModule } from './auth/auth.module';
 import { AuditLogsModule } from './audit-logs/audit-logs.module';
+import { ClubModule } from './club/club.module';
+import { UserTokenModule } from './user-token/user-token.module';
+import { CommunicationModule } from './communication/communication.module';
 
 @Module({
   imports: [
@@ -12,7 +15,10 @@ import { AuditLogsModule } from './audit-logs/audit-logs.module';
     ConfigModule.forRoot({ isGlobal: true }),
     GraphqlModule,
     AuthModule,
-    AuditLogsModule
+    AuditLogsModule,
+    ClubModule,
+    UserTokenModule,
+    CommunicationModule,
   ],
   providers: [AppResolver],
 })

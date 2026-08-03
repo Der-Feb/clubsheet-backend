@@ -30,7 +30,7 @@ export class AuthController {
 
         await this.auditLogsService.createLog({
             category: ENAuditCategory.AUTH,
-            action: 'auth-register',
+            action: 'authRegister',
             entityType: 'User, Person',
             createdBy: userData.user_id,
             metadata: { person_id: userData.person_id,  user_id: userData.person_id },
@@ -57,7 +57,7 @@ export class AuthController {
 
         await this.auditLogsService.createLog({
             category: ENAuditCategory.AUTH,
-            action: 'auth-login',
+            action: 'authLogin',
             entityType: 'User',
             createdBy: userData.user_id,
             metadata: { user_id: userData.user_id },
