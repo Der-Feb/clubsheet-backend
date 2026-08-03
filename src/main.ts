@@ -12,7 +12,6 @@ async function bootstrap() {
   
   app.use(cookieParser());
   app.useGlobalFilters(new HttpExceptionFilter());
-
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true, // Strips out properties that do not have any decorators
@@ -21,6 +20,7 @@ async function bootstrap() {
     }),
   );
 
+  app.setGlobalPrefix('api');
   app.use(morgan("combined", { stream: { write: (message: string) => appLogger.log(message.trim()) } }));
 
   await app.listen(port);
