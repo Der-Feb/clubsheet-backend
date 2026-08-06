@@ -90,29 +90,30 @@ model Membership {
   id String @id @default(cuid())
 
   status ENMembershipStatus @default(ACTIVE)
-  type ENMembershipType
+  type   ENMembershipType
 
-  joinedAt DateTime @map("joined_at")
-  endedAt DateTime? @map("ended_at")
+  joinedAt DateTime  @map("joined_at")
+  endedAt  DateTime? @map("ended_at")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   personId String @map("person_id")
-  person Person @relation(fields: [personId], references: [id])
+  person   Person @relation(fields: [personId], references: [id])
 
   clubId String @map("club_id")
-  club Club @relation("ClubMemberships", fields: [clubId], references: [id])
+  club   Club   @relation("ClubMemberships", fields: [clubId], references: [id])
 
-  roles MembershipRole[]
-  permissions MembershipPermission[]
-  assignedRoles MembershipRole[] @relation("AssignedRoles")
-  createdClubs Club[] @relation("ClubCreator")
+  roles         MembershipRole[]
+  permissions   MembershipPermission[]
+  assignedRoles MembershipRole[]       @relation("AssignedRoles")
+
+  // MUST HAVE THIS EXACT LINE:
+  createdClubs  Club[]                 @relation("ClubCreator")
 
   @@index([personId])
   @@index([clubId])
   @@index([status])
-
   @@map("memberships")
 }
 
@@ -128,7 +129,7 @@ enum ENPermissionModule {
 enum ENPermissionAction {
   CREATE
   READ
-  UPDATE
+  WRITE
   DELETE
   APPROVE
   EXPORT
@@ -237,13 +238,15 @@ enum ENClubStatus {
 }
 
 model Club {
-  id String @id @default(cuid())
-  name String
-  shortName String? @map("short_name")
-  logo String?
-  country String
-  createdById String? @map("created_by")
-  createdBy Membership? @relation("ClubCreator", fields: [createdById], references: [id])
+  id        String   @id @default(cuid())
+  name      String
+  shortName String?  @map("short_name")
+  logo      String?
+  country   String
+
+  createdById String?     @map("created_by")
+  createdBy   Membership? @relation("ClubCreator", fields: [createdById], references: [id])
+
   status ENClubStatus @default(ACTIVE)
 
   createdAt DateTime @default(now()) @map("created_at")

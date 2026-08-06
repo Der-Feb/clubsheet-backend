@@ -8,6 +8,7 @@ import { AuditLogsModule } from './audit-logs/audit-logs.module';
 import { ClubModule } from './club/club.module';
 import { UserTokenModule } from './user-token/user-token.module';
 import { CommunicationModule } from './communication/communication.module';
+import { MembershipModule } from './membership/membership.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { CommunicationModule } from './communication/communication.module';
     ClubModule,
     UserTokenModule,
     CommunicationModule,
+    MembershipModule,
   ],
   providers: [AppResolver],
 })

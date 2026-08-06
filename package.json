@@ -24,7 +24,8 @@
     "docker:logs": "docker compose logs -f",
     "db:studio": "npx prisma studio",
     "db:migrate": "npx prisma migrate dev",
-    "db:types": "npx prisma generate"
+    "db:types": "npx prisma generate",
+    "db:seed": "ts-node ./prisma/seed.ts"
   },
   "dependencies": {
     "@apollo/server": "^5.5.1",
@@ -72,7 +73,7 @@
     "@types/nodemailer": "^8.0.1",
     "@types/passport-jwt": "^4.0.1",
     "@types/passport-local": "^1.0.38",
-    "@types/pg": "^8.20.0",
+    "@types/pg": "^8.20.4",
     "@types/supertest": "^7.0.0",
     "dotenv": "^17.4.2",
     "eslint": "^9.18.0",
