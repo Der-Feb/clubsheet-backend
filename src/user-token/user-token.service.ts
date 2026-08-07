@@ -1,12 +1,13 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { CommunicationService } from '../communication/communication.service';
-import { generateNanoid } from 'id-tools';
-import * as argon2 from 'argon2';
 import { PrismaService } from '../prisma/prisma.service';
-import { ENAuditCategory, ENUserTokenStatus, ENUserTokenType } from '@prisma/client';
+import { ENAuditCategory, ENUserTokenType } from '@prisma/client';
 import { ResourceNotFoundException } from '../common/exceptions/resource-not-found';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { maskEmail } from '../common/utils/string-func';
+import { ConfigService } from '@nestjs/config';
+import { generateApplicationToken, computeTokenHash } from '../common/utils/token-hash.util';
+import * as argon2 from 'argon2';
 
 @Injectable()
 export class UserTokenService {
@@ -14,9 +15,8 @@ export class UserTokenService {
         private readonly prisma: PrismaService,
         private readonly communicationService: CommunicationService,
         private readonly auditLogsService: AuditLogsService,
-) {}
-
-    private fiveMinutes = 1000 * 60 * 5;
+        private readonly configService: ConfigService,
+    ) {}
 
     public async userExists(userId: string) {
         if (!userId) throw new BadRequestException('User ID is required');
@@ -27,7 +27,19 @@ export class UserTokenService {
         });
     }
 
-    public verifyEmailHtmlBody(name: string, token: string) {
+    private fiveMinutes = 1000 * 60 * 5;
+
+    /**
+     * Generate a CSPRNG token and its HMAC-SHA-256 hash using TOKEN_HASH_SECRET.
+     * The raw token is sent to the user; only the hash is stored in the database.
+     * Validation is a direct unique lookup — no iteration, no Argon2.
+     */
+    private giveTokenAndHash(): { token: string; hash: string } {
+        const secret = this.configService.getOrThrow<string>('TOKEN_HASH_SECRET');
+        return generateApplicationToken(secret);
+    }
+
+    private verifyEmailHtmlBody(name: string, token: string) {
         return `
         <!DOCTYPE html>
             <html>
@@ -166,8 +178,7 @@ export class UserTokenService {
             );
         }
         
-        const generatedToken = generateNanoid(5, 'abcdefghijklmnopqrstuvwxyz0123456789');
-        const hashedToken = await argon2.hash(generatedToken);
+        const { token, hash } = this.giveTokenAndHash()
         let disruptedTokensCount = 0;
 
         // transaction based token creation and email sending
@@ -184,7 +195,7 @@ export class UserTokenService {
 
             await tx.userToken.create({
                 data: {
-                    hash: hashedToken,
+                    hash,
                     type: ENUserTokenType.EMAIL_VERIFICATION,
                     expiresAt: new Date(Date.now() + this.fiveMinutes), // expires in 5 minutes
                     userId: userId,
@@ -196,7 +207,7 @@ export class UserTokenService {
                 user.email,
                 "Email Verification",
                 `Hello, ${user.person.firstName}!`,
-                this.verifyEmailHtmlBody(user.person.firstName, generatedToken),
+                this.verifyEmailHtmlBody(user.person.firstName, token),
             );
         });
 
@@ -223,30 +234,26 @@ export class UserTokenService {
 
         const now = new Date();
 
-        // find the user token record, which is pending, not expired, and matches the token
-        const tokenRecords = await this.prisma.userToken.findMany({
-            where: {
-                userId,
-                type: ENUserTokenType.EMAIL_VERIFICATION,
-                status: ENUserTokenStatus.PENDING,
-                expiresAt: { gte: now },
-            }
+        // Compute HMAC digest and look up directly — no iteration needed
+        const secret = this.configService.getOrThrow<string>('TOKEN_HASH_SECRET');
+        const tokenHash = computeTokenHash(secret, token);
+
+        const tokenRecord = await this.prisma.userToken.findUnique({
+            where: { hash: tokenHash },
         });
 
-        let tokenApproved = false;
-        for(const tokenRecord of tokenRecords) {
-            if (await argon2.verify(tokenRecord.hash, token)) {
-                tokenApproved = true;
-                break;
-            }
-        }
-
-        if(!tokenApproved) 
+        if (
+            !tokenRecord ||
+            tokenRecord.userId !== userId ||
+            tokenRecord.type !== ENUserTokenType.EMAIL_VERIFICATION ||
+            tokenRecord.expiresAt < now
+        ) {
             throw new BadRequestException("Token is invalid or is expired");
+        }
 
         let usedTokens = 0;
         await this.prisma.$transaction(async(tx) => {
-            // verify the user and delete all the token related to user
+            // Delete all email verification tokens for this user
             const usedTokensResult = await tx.userToken.deleteMany({
                 where: { 
                     userId: user.id,
@@ -255,7 +262,7 @@ export class UserTokenService {
             });
             usedTokens = usedTokensResult.count;
     
-            // update the user to be verified
+            // Mark user as verified
             await tx.user.update({
                 where: { id: userId },
                 data: { isEmailVerified: true }
@@ -300,8 +307,7 @@ export class UserTokenService {
             );
         }
         
-        const generatedToken = generateNanoid(5, 'abcdefghijklmnopqrstuvwxyz0123456789');
-        const hashedToken = await argon2.hash(generatedToken);
+        const { token, hash } = this.giveTokenAndHash();
         let disruptedCount = 0;
 
         // 3. Atomic Transaction
@@ -318,7 +324,7 @@ export class UserTokenService {
             // Save the active token
             await tx.userToken.create({
                 data: {
-                    hash: hashedToken,
+                    hash,
                     type: ENUserTokenType.CHANGE_PASSWORD,
                     expiresAt: new Date(Date.now() + this.fiveMinutes),
                     userId: user.id,
@@ -330,7 +336,7 @@ export class UserTokenService {
                 user.email,
                 "Reset Your Password",
                 `Hello, ${user.person.firstName}!`,
-                this.resetPasswordHtmlBody(user.person.firstName, generatedToken),
+                this.resetPasswordHtmlBody(user.person.firstName, token),
             );
         });
 
@@ -359,26 +365,20 @@ export class UserTokenService {
 
         const now = new Date();
 
-        const tokenRecords = await this.prisma.userToken.findMany({
-            where: {
-                userId: user.id,
-                type: ENUserTokenType.CHANGE_PASSWORD,
-                status: ENUserTokenStatus.PENDING,
-                expiresAt: { gte: now },
-            }
+        // Compute HMAC digest and look up directly — no iteration needed
+        const secret = this.configService.getOrThrow<string>('TOKEN_HASH_SECRET');
+        const tokenHash = computeTokenHash(secret, token);
+
+        const tokenRecord = await this.prisma.userToken.findUnique({
+            where: { hash: tokenHash },
         });
 
-        let tokenApproved = false;
-        for (const tokenRecord of tokenRecords) {
-            if (tokenRecord.expiresAt.getTime() < now.getTime()) continue;
-
-            if (await argon2.verify(tokenRecord.hash, token)) {
-                tokenApproved = true;
-                break;
-            }
-        }
-
-        if (!tokenApproved) {
+        if (
+            !tokenRecord ||
+            tokenRecord.userId !== user.id ||
+            tokenRecord.type !== ENUserTokenType.CHANGE_PASSWORD ||
+            tokenRecord.expiresAt < now
+        ) {
             throw new BadRequestException("Token is invalid or has expired");
         }
 
@@ -400,7 +400,7 @@ export class UserTokenService {
             });
         });
 
-        // 3. Fire the Audit Log tracking
+        // Fire the Audit Log tracking
         await this.auditLogsService.createLog({
             category: ENAuditCategory.AUTH,
             action: "resetPasswordComplete",

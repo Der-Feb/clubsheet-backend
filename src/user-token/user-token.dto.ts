@@ -1,12 +1,12 @@
 import { IntersectionType } from '@nestjs/mapped-types';
 import { Transform } from 'class-transformer';
-import { IsString, IsNotEmpty, Length, IsEmail, MinLength } from "class-validator";
+import { IsString, IsNotEmpty, IsEmail, MinLength } from "class-validator";
 
 export class VerifyEmailDto {
-    @Transform(({ value }) => value?.trim().toLowerCase())
+    @Transform(({ value }) => value?.trim())
     @IsString()
-    @Length(5, 5, { message: "Invalid token" })
     @IsNotEmpty()
+    @MinLength(10, { message: "Invalid token" })
     token!: string
 }
 
