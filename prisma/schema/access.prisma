@@ -80,7 +80,8 @@ enum ENMembershipStatus {
 }
 
 enum ENMembershipType {
-  PERSONNEL
+  OWNER
+  STAFF
   ATHLETE
   GUARDIAN
   BOARD
@@ -90,7 +91,7 @@ model Membership {
   id String @id @default(cuid())
 
   status ENMembershipStatus @default(ACTIVE)
-  type   ENMembershipType
+  types   MembershipType[]
 
   joinedAt DateTime  @map("joined_at")
   endedAt  DateTime? @map("ended_at")
@@ -115,6 +116,15 @@ model Membership {
   @@index([clubId])
   @@index([status])
   @@map("memberships")
+}
+
+model MembershipType {
+  membershipId  String
+  membership    Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  type          ENMembershipType
+
+  @@unique([membershipId, type])
 }
 
 enum ENPermissionModule {
