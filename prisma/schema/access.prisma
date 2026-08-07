@@ -35,7 +35,8 @@ model User {
   personId String @unique @map("person_id")
   person   Person @relation(fields: [personId], references: [id])
 
-  tokens UserToken[]
+  tokens              UserToken[]
+  acceptedInvitations Invitation[] @relation("UserAcceptedInvitations")
 
   @@map("users")
 }
@@ -43,7 +44,6 @@ model User {
 enum ENUserTokenType {
   EMAIL_VERIFICATION
   CHANGE_PASSWORD
-  INVITATION
 }
 
 enum ENUserTokenStatus {
@@ -54,7 +54,7 @@ enum ENUserTokenStatus {
 model UserToken {
   id        String        @id @default(cuid())
   type      ENUserTokenType
-  hash      String
+  hash      String        @unique
 
   expiresAt DateTime  @map("expires_at")
   usedAt    DateTime? @map("used_at")
@@ -67,7 +67,6 @@ model UserToken {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@index([userId])
-  @@index([hash])
 
   @@map("user_tokens")
 }
@@ -109,8 +108,8 @@ model Membership {
   permissions   MembershipPermission[]
   assignedRoles MembershipRole[]       @relation("AssignedRoles")
 
-  // MUST HAVE THIS EXACT LINE:
   createdClubs  Club[]                 @relation("ClubCreator")
+  sentInvitations Invitation[]         @relation("MembershipSentInvitations")
 
   @@index([personId])
   @@index([clubId])
@@ -263,7 +262,46 @@ model Club {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   memberships Membership[] @relation("ClubMemberships")
+  invitations Invitation[] @relation("ClubInvitations")
 
   @@index([createdById])
   @@map("clubs")
+}
+
+enum ENInvitationStatus {
+  PENDING
+  DISRUPTED
+}
+
+model Invitation {
+  id String @id @default(cuid())
+
+  email String
+
+  tokenHash String @unique @map("token_hash")
+
+  type ENMembershipType
+
+  status ENInvitationStatus @default(PENDING)
+
+  expiresAt DateTime @map("expires_at")
+  acceptedAt DateTime? @map("accepted_at")
+
+  clubId String @map("club_id")
+  club Club @relation("ClubInvitations", fields: [clubId], references: [id])
+
+  inviterId String @map("inviter_id")
+  inviter Membership @relation("MembershipSentInvitations", fields: [inviterId], references: [id])
+
+  acceptedByUserId String? @map("accepted_by_user_id")
+  acceptedByUser User? @relation("UserAcceptedInvitations", fields: [acceptedByUserId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([email])
+  @@index([clubId])
+  @@index([expiresAt])
+
+  @@map("invitations")
 }

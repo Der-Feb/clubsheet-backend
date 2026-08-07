@@ -1,6 +1,6 @@
 import { Optional } from "@nestjs/common";
 import { ENMembershipType } from "@prisma/client";
-import { ArrayMinSize, IsArray, IsEnum, IsISO31661Alpha2, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { ArrayMinSize, IsArray, IsEmail, IsEnum, IsISO31661Alpha2, IsNotEmpty, IsOptional, IsString } from "class-validator";
 import countries from 'i18n-iso-countries';
 import { Transform } from "class-transformer";
 
