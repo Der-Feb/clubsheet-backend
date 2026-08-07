@@ -4,7 +4,6 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateClubDto, UpdateClubDto } from './club.dto';
 import { ResourceNotFoundException } from '../common/exceptions/resource-not-found';
 import { ENAuditCategory, ENClubStatus, ENMembershipStatus, ENMembershipType } from '@prisma/client';
-import { TPayload } from '../auth/auth.types';
 
 @Injectable()
 export class ClubService {

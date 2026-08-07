@@ -59,4 +59,3 @@ export class RegisterUserPersonDto extends IntersectionType(
 ) {}
 
 export class LoginDto extends RegisterUserDto {}
-

@@ -4,6 +4,11 @@ export type TPayload = {
     person_id: string
 }
 
+export type TCurrentUser = {
+    user_id: string,
+    person_id: string,
+}
+
 export type TUserData = {
     user_id: string,
     person_id: string,
