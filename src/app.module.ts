@@ -9,6 +9,8 @@ import { ClubModule } from './club/club.module';
 import { UserTokenModule } from './user-token/user-token.module';
 import { CommunicationModule } from './communication/communication.module';
 import { MembershipModule } from './membership/membership.module';
+import { InvitationController } from './invitation/invitation.controller';
+import { InvitationModule } from './invitation/invitation.module';
 
 @Module({
   imports: [
@@ -21,7 +23,9 @@ import { MembershipModule } from './membership/membership.module';
     UserTokenModule,
     CommunicationModule,
     MembershipModule,
+    InvitationModule,
   ],
   providers: [AppResolver],
+  controllers: [InvitationController],
 })
 export class AppModule {}
