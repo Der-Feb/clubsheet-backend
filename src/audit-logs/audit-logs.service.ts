@@ -17,7 +17,7 @@ export class AuditLogsService {
   }) {
     const { category, action, entityType, metadata, createdBy } = params;
 
-    const description = generateAuditDescription(action, metadata);
+    const description = params.description ?? generateAuditDescription(action, metadata);
 
     return await this.prisma.auditLog.create({
       data: {
