@@ -34,6 +34,7 @@ export class AuthService {
             person_id: user.person.id,
             name: `${user.person.firstName} ${user.person.lastName}`,
             email: user.email,
+            isEmailVerified: user.isEmailVerified,
         }
     }
 
@@ -100,13 +101,13 @@ export class AuthService {
             include: { person: true },
         });
 
-        if (!user) throw new UnauthorizedException('Invalid email or password');
+        if (!user) throw new UnauthorizedException('Invalid credentials');
 
         const validPassword = await argon2.verify(
             user.passwordHash, loginDto.password,
         );
 
-        if (!validPassword) throw new UnauthorizedException('Invalid email or password');
+        if (!validPassword) throw new UnauthorizedException('Invalid credentials');
 
         return this.returnSanitizedUserData(user);
     }
@@ -131,5 +132,17 @@ export class AuthService {
             sameSite: 'strict', // Protects against CSRF attacks
             maxAge: 24 * 60 * 60 * 1000,
         });
+    }
+
+    public async userVerified(user_id: string) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: user_id },
+            include: { person: true },
+        });
+
+        if(!user)
+            throw new ResourceNotFoundException("User not found", "User");
+
+        return user.isEmailVerified;
     }
 }

@@ -8,5 +8,6 @@ export type TUserData = {
     user_id: string,
     person_id: string,
     email: string,
-    name: string
+    name: string,
+    isEmailVerified: boolean
 }
