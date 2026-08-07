@@ -8,6 +8,7 @@ import { CommunicationModule } from '../communication/communication.module';
     CommunicationModule,
     AuditLogsModule,
   ],
-  providers: [UserTokenService]
+  providers: [UserTokenService],
+  exports: [UserTokenService]
 })
 export class UserTokenModule {}

@@ -17,7 +17,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         defaults: { from: `"ClubSheet" <${configService.get('MAIL_FROM')}>` },
       }),
     }),
-    // continue here
   ],
   providers: [CommunicationService],
   exports: [CommunicationService]

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Put, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto, RegisterUserPersonDto } from './auth.dto';
 import { Response } from 'express';
@@ -7,12 +7,15 @@ import { CurrentUser } from '../common/decorators/current-user';
 import { TPayload, TUserData } from './auth.types';
 import { ENAuditCategory } from '@prisma/client';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
+import { UserTokenService } from '../user-token/user-token.service';
+import { ForgotPasswordDto, ResetPasswordDto, VerifyEmailDto } from '../user-token/user-token.dto';
 
 @Controller('auth')
 export class AuthController {
     constructor(
         private authService: AuthService,
-        private auditLogsService: AuditLogsService
+        private auditLogsService: AuditLogsService,
+        private userTokenService: UserTokenService
     ) {}
 
     @HttpCode(HttpStatus.CREATED)
@@ -91,6 +94,40 @@ export class AuthController {
         @CurrentUser() user: any
     ) {
         const { user_id, person_id } = user;
-        return this.authService.getUserData(user_id, person_id);
+        return await this.authService.getUserData(user_id, person_id);
     }
+
+    @HttpCode(HttpStatus.OK)
+    @Post('email/send-verify')
+    @UseGuards(PassportJwtGuard)
+    public async sendVerifyEmail(
+        @CurrentUser() user: any
+    ) {
+        return await this.userTokenService.sendVerifyEmail(user.user_id);
+    }
+
+    @HttpCode(HttpStatus.OK)
+    @Put('email/verify')
+    @UseGuards(PassportJwtGuard)
+    public async verifyEMail(
+        @CurrentUser() user: any,
+        @Body() data: VerifyEmailDto,
+    ) {
+        return await this.userTokenService.verifyEmail(user.user_id, data.token);
+    }
+
+    @Post('password/forgot')
+    public async forgotPassword(
+        @Body() data: ForgotPasswordDto
+    ) {
+        return await this.userTokenService.forgotPassword(data.email);
+    }
+
+    @Put('password/reset')
+    public async resetPassword(
+        @Body() data: ResetPasswordDto
+    ) {
+        return await this.userTokenService.resetPassword(data);
+    }
+
 }

@@ -6,6 +6,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ENAuditCategory, ENUserTokenStatus, ENUserTokenType } from '@prisma/client';
 import { ResourceNotFoundException } from '../common/exceptions/resource-not-found';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
+import { maskEmail } from '../common/utils/string-func';
 
 @Injectable()
 export class UserTokenService {
@@ -18,6 +19,8 @@ export class UserTokenService {
     private fiveMinutes = 1000 * 60 * 5;
 
     public async userExists(userId: string) {
+        if (!userId) throw new BadRequestException('User ID is required');
+        
         return await this.prisma.user.findUnique({
             where: { id: userId },
             include: { person: true },
@@ -170,12 +173,11 @@ export class UserTokenService {
         // transaction based token creation and email sending
         await this.prisma.$transaction(async (tx) => {   
             // loop in others of the user and mark them as disrupted
-            const deleteResult = await tx.userToken.updateMany({
+            const deleteResult = await tx.userToken.deleteMany({
                 where: {
                     userId,
                     type: ENUserTokenType.EMAIL_VERIFICATION,
                 },
-                data: { status: ENUserTokenStatus.DISRUPTED }
             });
 
             disruptedTokensCount = deleteResult.count;
@@ -210,6 +212,7 @@ export class UserTokenService {
         return {
             success: true,
             message: "Verification email sent successfully",
+            details: `Check your email ${maskEmail(user.email)}, the token expires in 5 minutes`
         }
     }
     
@@ -218,18 +221,21 @@ export class UserTokenService {
         if(!user) throw new ResourceNotFoundException("User not found", "User");
         if(user.isEmailVerified) throw new BadRequestException("User email is already verified");
 
-        // find the user token record, which is pending and matches the token
+        const now = new Date();
+
+        // find the user token record, which is pending, not expired, and matches the token
         const tokenRecords = await this.prisma.userToken.findMany({
             where: {
                 userId,
                 type: ENUserTokenType.EMAIL_VERIFICATION,
+                status: ENUserTokenStatus.PENDING,
+                expiresAt: { gte: now },
             }
         });
 
         let tokenApproved = false;
         for(const tokenRecord of tokenRecords) {
-            if(await argon2.verify(tokenRecord.hash, token)) {
-                await argon2.verify(tokenRecord.hash, token);
+            if (await argon2.verify(tokenRecord.hash, token)) {
                 tokenApproved = true;
                 break;
             }
@@ -280,7 +286,7 @@ export class UserTokenService {
         
         if (!user) throw new ResourceNotFoundException("User not found with this email", "User");
 
-        const tokenCountInWindow = await this.prisma.userToken.count({
+        const tokenCountInWindow = await this.prisma.userToken.findMany({
             where: {
                 userId: user.id,
                 type: ENUserTokenType.CHANGE_PASSWORD,
@@ -288,7 +294,7 @@ export class UserTokenService {
             }
         });
 
-        if (tokenCountInWindow >= 3) {
+        if (tokenCountInWindow.length >= 3) {
             throw new BadRequestException(
                 "You have requested too many password reset codes. Please check your inbox or wait 5 minutes before trying again."
             );
@@ -341,6 +347,7 @@ export class UserTokenService {
         return {
             success: true,
             message: "Password reset verification code sent successfully",
+            details: `Check your email ${maskEmail(user.email)}, the token expires in 5 minutes`
         };
     }
 
@@ -350,16 +357,21 @@ export class UserTokenService {
         const user = await this.prisma.user.findUnique({ where: { email } });
         if (!user) throw new ResourceNotFoundException("User not found", "User");
 
+        const now = new Date();
+
         const tokenRecords = await this.prisma.userToken.findMany({
             where: {
                 userId: user.id,
                 type: ENUserTokenType.CHANGE_PASSWORD,
-                expiresAt: { gte: new Date() }
+                status: ENUserTokenStatus.PENDING,
+                expiresAt: { gte: now },
             }
         });
 
         let tokenApproved = false;
         for (const tokenRecord of tokenRecords) {
+            if (tokenRecord.expiresAt.getTime() < now.getTime()) continue;
+
             if (await argon2.verify(tokenRecord.hash, token)) {
                 tokenApproved = true;
                 break;
