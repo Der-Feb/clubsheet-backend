@@ -1,4 +1,4 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CommunicationService } from '../communication/communication.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
@@ -232,6 +232,8 @@ export class InvitationService {
         if (!userAlreadyExists) 
             throw new ResourceNotFoundException('No registered account found for this email. Please register first.', 'User');
 
+        if (!userAlreadyExists.isEmailVerified)
+            throw new BadRequestException('User account is not verified. Please verify your email first.');
 
         await this.prisma.$transaction(async (tx) => {
             await tx.membership.create({

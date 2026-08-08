@@ -11,12 +11,15 @@ import { CommunicationModule } from './communication/communication.module';
 import { MembershipModule } from './membership/membership.module';
 import { InvitationController } from './invitation/invitation.controller';
 import { InvitationModule } from './invitation/invitation.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { TasksService } from './tasks/tasks.service';
 
 @Module({
   imports: [
     PrismaModule,
     ConfigModule.forRoot({ isGlobal: true }),
     GraphqlModule,
+    ScheduleModule.forRoot(),
     AuthModule,
     AuditLogsModule,
     ClubModule,
@@ -25,7 +28,7 @@ import { InvitationModule } from './invitation/invitation.module';
     MembershipModule,
     InvitationModule,
   ],
-  providers: [AppResolver],
+  providers: [AppResolver, TasksService],
   controllers: [InvitationController],
 })
 export class AppModule {}
