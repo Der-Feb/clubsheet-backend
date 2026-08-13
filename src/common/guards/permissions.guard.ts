@@ -1,6 +1,7 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PERMISSIONS_KEY, IPermissionsMetadata } from '../decorators/require-permissions.decorator';
+import { GqlExecutionContext } from '@nestjs/graphql';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
@@ -12,45 +13,41 @@ export class PermissionsGuard implements CanActivate {
       [context.getHandler(), context.getClass()],
     );
 
-    // Allow access if no permissions are configured for this route
     if (!metadata || !metadata.permissions || metadata.permissions.length === 0) {
       return true;
     }
 
     const { strict, permissions: requiredPermissions } = metadata;
-    const request = context.switchToHttp().getRequest();
-    const activeMembership = request.activeMembership;
+    const req = this.getRequest(context);
+    const activeMembership = req.activeMembership;
 
     if (!activeMembership) {
-      throw new ForbiddenException('No active club membership found for this request');
+      throw new ForbiddenException('Active membership context missing');
     }
 
-    // Flatten user permissions from both assigned Roles and direct Membership permissions
-    const userPermissions = new Set<string>();
+    // Extract all hydrated permission codes directly from activeMembership
+    const userPermissions = new Set<string>(
+      activeMembership.permissions?.map((mp: any) => mp.permission?.code).filter(Boolean)
+    );
 
-    activeMembership.roles?.forEach((mr: any) => {
-      mr.role?.permissions?.forEach((rp: any) => {
-        if (rp.permission?.code) {
-          userPermissions.add(rp.permission.code);
-        }
-      });
-    });
-
-    activeMembership.permissions?.forEach((mp: any) => {
-      if (mp.permission?.code) {
-        userPermissions.add(mp.permission.code);
-      }
-    });
-
-    // Evaluate strict (every) vs non-strict (some)
+    // Evaluate strict (ALL) vs non-strict (ANY)
     const hasPermission = strict
-      ? requiredPermissions.every((perm) => userPermissions.has(perm))
-      : requiredPermissions.some((perm) => userPermissions.has(perm));
+      ? requiredPermissions.every((code) => userPermissions.has(code))
+      : requiredPermissions.some((code) => userPermissions.has(code));
 
     if (!hasPermission) {
       throw new ForbiddenException('You do not have sufficient permissions to perform this action');
     }
 
     return true;
+  }
+
+  private getRequest(context: ExecutionContext) {
+      if (context.getType().toString() === 'graphql') {
+          const gqlContext = GqlExecutionContext.create(context);
+          return gqlContext.getContext().req;
+      }
+
+      return context.switchToHttp().getRequest();
   }
 }

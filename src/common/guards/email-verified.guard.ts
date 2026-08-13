@@ -7,13 +7,14 @@ import {
   UnauthorizedException 
 } from "@nestjs/common";
 import { AuthService } from "../../auth/auth.service";
+import { GqlExecutionContext } from "@nestjs/graphql";
 
 @Injectable()
 export class EmailVerifiedGuard implements CanActivate {
   constructor(private readonly authService: AuthService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
+    const request = this.getRequest(context);
     const user = request.user;
 
     
@@ -27,4 +28,13 @@ export class EmailVerifiedGuard implements CanActivate {
 
     return true;
   }
+
+      private getRequest(context: ExecutionContext) {
+          if (context.getType().toString() === 'graphql') {
+              const gqlContext = GqlExecutionContext.create(context);
+              return gqlContext.getContext().req;
+          }
+          
+          return context.switchToHttp().getRequest();
+      }
 }
