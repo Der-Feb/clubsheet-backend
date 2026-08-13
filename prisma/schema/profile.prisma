@@ -1,0 +1,46 @@
+
+model Profile {
+  id String @id @default(cuid())
+
+  personId String @unique @map("person_id")
+  person Person @relation(fields: [personId], references: [id])
+
+  playerProfile PlayerProfile?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+}
+
+// for the player
+enum ENPlayerPosition {
+  GOALKEEPER
+  DEFENDER
+  MIDFIELDER
+  FORWARD
+}
+
+enum ENPreferredFoot {
+  LEFT
+  RIGHT
+  BOTH
+}
+
+model PlayerProfile {
+  id String @id @default(cuid())
+
+  profileId String  @unique @map("profile_id")
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  position      ENPlayerPosition?
+  preferredFoot ENPreferredFoot?
+
+  heightCm Decimal? @map("height_cm") @db.Decimal(5, 2)
+  weightKg Decimal? @map("weight_kg") @db.Decimal(5, 2)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("player_profiles")
+}
+
+// other profiles
