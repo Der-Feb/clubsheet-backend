@@ -8,6 +8,7 @@ import { LocalStrategy } from './strategy/local.strategy';
 import { JwtStrategy } from './strategy/jwt.strategy';
 import { AuditLogsModule } from '../audit-logs/audit-logs.module';
 import { UserTokenModule } from '../user-token/user-token.module';
+import { EmailVerifiedGuard } from '../common/guards/email-verified.guard';
 
 @Module({
   imports: [
@@ -28,7 +29,8 @@ import { UserTokenModule } from '../user-token/user-token.module';
   providers: [
     AuthService,
     LocalStrategy,
-    JwtStrategy
+    JwtStrategy,
+    EmailVerifiedGuard
   ],
   exports: [AuthService]
 })
