@@ -1,36 +1,48 @@
 -- CreateEnum
-CREATE TYPE "Gender" AS ENUM ('MALE', 'FEMALE');
+CREATE TYPE "ENGender" AS ENUM ('MALE', 'FEMALE');
 
 -- CreateEnum
-CREATE TYPE "UserTokenType" AS ENUM ('EMAIL_VERIFICATION', 'CHANGE_PASSWORD', 'INVITATION');
+CREATE TYPE "ENUserTokenType" AS ENUM ('EMAIL_VERIFICATION', 'CHANGE_PASSWORD');
 
 -- CreateEnum
-CREATE TYPE "MembershipStatus" AS ENUM ('PENDING', 'ACTIVE', 'SUSPENDED', 'ENDED');
+CREATE TYPE "ENUserTokenStatus" AS ENUM ('PENDING', 'DISRUPTED');
 
 -- CreateEnum
-CREATE TYPE "MembershipType" AS ENUM ('PERSONNEL', 'ATHLETE', 'GUARDIAN', 'BOARD');
+CREATE TYPE "ENMembershipStatus" AS ENUM ('PENDING', 'ACTIVE', 'SUSPENDED', 'ENDED');
 
 -- CreateEnum
-CREATE TYPE "PermissionModule" AS ENUM ('ACCESS', 'TRAINING', 'PLAYER', 'MEDICAL', 'FINANCE', 'MATCH');
+CREATE TYPE "ENMembershipType" AS ENUM ('OWNER', 'STAFF', 'ATHLETE', 'GUARDIAN', 'BOARD');
 
 -- CreateEnum
-CREATE TYPE "PermissionAction" AS ENUM ('CREATE', 'READ', 'UPDATE', 'DELETE', 'APPROVE', 'EXPORT', 'ASSIGN');
+CREATE TYPE "ENPermissionModule" AS ENUM ('ACCESS', 'TRAINING', 'PLAYER', 'MEDICAL', 'FINANCE', 'MATCH');
 
 -- CreateEnum
-CREATE TYPE "PermissionScope" AS ENUM ('ANY', 'CLUB', 'TEAM', 'OWN');
+CREATE TYPE "ENPermissionAction" AS ENUM ('CREATE', 'READ', 'WRITE', 'DELETE', 'APPROVE', 'EXPORT', 'ASSIGN');
 
 -- CreateEnum
-CREATE TYPE "ClubStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'DELETED');
+CREATE TYPE "ENPermissionScope" AS ENUM ('ANY', 'CLUB', 'TEAM', 'OWN');
 
 -- CreateEnum
-CREATE TYPE "AuditCategory" AS ENUM ('AUTH', 'IAM', 'CLUB', 'PLAYER', 'TRAINING', 'MATCH', 'MEDICAL', 'FINANCE', 'SYSTEM');
+CREATE TYPE "ENClubStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'DELETED');
+
+-- CreateEnum
+CREATE TYPE "ENInvitationStatus" AS ENUM ('PENDING', 'DISRUPTED');
+
+-- CreateEnum
+CREATE TYPE "ENPlayerPosition" AS ENUM ('GOALKEEPER', 'DEFENDER', 'MIDFIELDER', 'FORWARD');
+
+-- CreateEnum
+CREATE TYPE "ENPreferredFoot" AS ENUM ('LEFT', 'RIGHT', 'BOTH');
+
+-- CreateEnum
+CREATE TYPE "ENAuditCategory" AS ENUM ('AUTH', 'IAM', 'CLUB', 'PLAYER', 'TRAINING', 'MATCH', 'MEDICAL', 'FINANCE', 'SYSTEM');
 
 -- CreateTable
 CREATE TABLE "persons" (
     "id" TEXT NOT NULL,
     "first_name" TEXT NOT NULL,
     "last_name" TEXT NOT NULL,
-    "gender" "Gender" NOT NULL,
+    "gender" "ENGender" NOT NULL,
     "dob" TIMESTAMP(3) NOT NULL,
     "nationality" TEXT NOT NULL,
     "profile_picture" TEXT,
@@ -45,7 +57,7 @@ CREATE TABLE "users" (
     "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "password_hash" TEXT NOT NULL,
-    "email_verified" TIMESTAMP(3),
+    "isEmailVerified" BOOLEAN NOT NULL DEFAULT false,
     "last_login" TIMESTAMP(3),
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
@@ -57,11 +69,13 @@ CREATE TABLE "users" (
 -- CreateTable
 CREATE TABLE "user_tokens" (
     "id" TEXT NOT NULL,
-    "type" "UserTokenType" NOT NULL,
+    "type" "ENUserTokenType" NOT NULL,
     "hash" TEXT NOT NULL,
     "expires_at" TIMESTAMP(3) NOT NULL,
     "used_at" TIMESTAMP(3),
+    "status" "ENUserTokenStatus" NOT NULL DEFAULT 'PENDING',
     "user_id" TEXT NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "user_tokens_pkey" PRIMARY KEY ("id")
 );
@@ -69,8 +83,7 @@ CREATE TABLE "user_tokens" (
 -- CreateTable
 CREATE TABLE "memberships" (
     "id" TEXT NOT NULL,
-    "status" "MembershipStatus" NOT NULL DEFAULT 'ACTIVE',
-    "type" "MembershipType" NOT NULL,
+    "status" "ENMembershipStatus" NOT NULL DEFAULT 'ACTIVE',
     "joined_at" TIMESTAMP(3) NOT NULL,
     "ended_at" TIMESTAMP(3),
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -82,13 +95,19 @@ CREATE TABLE "memberships" (
 );
 
 -- CreateTable
+CREATE TABLE "MembershipType" (
+    "membershipId" TEXT NOT NULL,
+    "type" "ENMembershipType" NOT NULL
+);
+
+-- CreateTable
 CREATE TABLE "permissions" (
     "id" TEXT NOT NULL,
     "code" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT NOT NULL,
-    "module" "PermissionModule" NOT NULL,
-    "action" "PermissionAction" NOT NULL,
+    "module" "ENPermissionModule" NOT NULL,
+    "action" "ENPermissionAction" NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -113,7 +132,7 @@ CREATE TABLE "role_permissions" (
     "id" TEXT NOT NULL,
     "role_id" TEXT NOT NULL,
     "permission_id" TEXT NOT NULL,
-    "scope" "PermissionScope" NOT NULL,
+    "scope" "ENPermissionScope" NOT NULL,
 
     CONSTRAINT "role_permissions_pkey" PRIMARY KEY ("id")
 );
@@ -123,7 +142,7 @@ CREATE TABLE "membership_permissions" (
     "id" TEXT NOT NULL,
     "membership_id" TEXT NOT NULL,
     "permission_id" TEXT NOT NULL,
-    "scope" "PermissionScope" NOT NULL,
+    "scope" "ENPermissionScope" NOT NULL,
 
     CONSTRAINT "membership_permissions_pkey" PRIMARY KEY ("id")
 );
@@ -147,7 +166,7 @@ CREATE TABLE "clubs" (
     "logo" TEXT,
     "country" TEXT NOT NULL,
     "created_by" TEXT,
-    "status" "ClubStatus" NOT NULL DEFAULT 'ACTIVE',
+    "status" "ENClubStatus" NOT NULL DEFAULT 'ACTIVE',
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -155,13 +174,56 @@ CREATE TABLE "clubs" (
 );
 
 -- CreateTable
+CREATE TABLE "invitations" (
+    "id" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "token_hash" TEXT NOT NULL,
+    "type" "ENMembershipType" NOT NULL,
+    "status" "ENInvitationStatus" NOT NULL DEFAULT 'PENDING',
+    "expires_at" TIMESTAMP(3) NOT NULL,
+    "accepted_at" TIMESTAMP(3),
+    "club_id" TEXT NOT NULL,
+    "inviter_id" TEXT NOT NULL,
+    "accepted_by_user_id" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "invitations_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Profile" (
+    "id" TEXT NOT NULL,
+    "person_id" TEXT NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Profile_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "player_profiles" (
+    "id" TEXT NOT NULL,
+    "profile_id" TEXT NOT NULL,
+    "position" "ENPlayerPosition",
+    "preferredFoot" "ENPreferredFoot",
+    "height_cm" DECIMAL(5,2),
+    "weight_kg" DECIMAL(5,2),
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "player_profiles_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "AuditLog" (
     "id" TEXT NOT NULL,
-    "category" "AuditCategory" NOT NULL,
+    "category" "ENAuditCategory" NOT NULL,
     "action" TEXT NOT NULL,
     "entityType" TEXT NOT NULL,
-    "entityId" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
     "metadata" JSONB,
+    "createdBy" TEXT DEFAULT 'system',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "AuditLog_pkey" PRIMARY KEY ("id")
@@ -174,10 +236,10 @@ CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 CREATE UNIQUE INDEX "users_person_id_key" ON "users"("person_id");
 
 -- CreateIndex
-CREATE INDEX "user_tokens_user_id_idx" ON "user_tokens"("user_id");
+CREATE UNIQUE INDEX "user_tokens_hash_key" ON "user_tokens"("hash");
 
 -- CreateIndex
-CREATE INDEX "user_tokens_hash_idx" ON "user_tokens"("hash");
+CREATE INDEX "user_tokens_user_id_idx" ON "user_tokens"("user_id");
 
 -- CreateIndex
 CREATE INDEX "memberships_person_id_idx" ON "memberships"("person_id");
@@ -187,6 +249,9 @@ CREATE INDEX "memberships_club_id_idx" ON "memberships"("club_id");
 
 -- CreateIndex
 CREATE INDEX "memberships_status_idx" ON "memberships"("status");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "MembershipType_membershipId_type_key" ON "MembershipType"("membershipId", "type");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "permissions_code_key" ON "permissions"("code");
@@ -206,6 +271,24 @@ CREATE UNIQUE INDEX "membership_roles_membership_id_role_id_key" ON "membership_
 -- CreateIndex
 CREATE INDEX "clubs_created_by_idx" ON "clubs"("created_by");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "invitations_token_hash_key" ON "invitations"("token_hash");
+
+-- CreateIndex
+CREATE INDEX "invitations_email_idx" ON "invitations"("email");
+
+-- CreateIndex
+CREATE INDEX "invitations_club_id_idx" ON "invitations"("club_id");
+
+-- CreateIndex
+CREATE INDEX "invitations_expires_at_idx" ON "invitations"("expires_at");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Profile_person_id_key" ON "Profile"("person_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "player_profiles_profile_id_key" ON "player_profiles"("profile_id");
+
 -- AddForeignKey
 ALTER TABLE "users" ADD CONSTRAINT "users_person_id_fkey" FOREIGN KEY ("person_id") REFERENCES "persons"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
@@ -217,6 +300,9 @@ ALTER TABLE "memberships" ADD CONSTRAINT "memberships_person_id_fkey" FOREIGN KE
 
 -- AddForeignKey
 ALTER TABLE "memberships" ADD CONSTRAINT "memberships_club_id_fkey" FOREIGN KEY ("club_id") REFERENCES "clubs"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "MembershipType" ADD CONSTRAINT "MembershipType_membershipId_fkey" FOREIGN KEY ("membershipId") REFERENCES "memberships"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "role_permissions" ADD CONSTRAINT "role_permissions_role_id_fkey" FOREIGN KEY ("role_id") REFERENCES "roles"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -241,3 +327,18 @@ ALTER TABLE "membership_roles" ADD CONSTRAINT "membership_roles_assigned_by_fkey
 
 -- AddForeignKey
 ALTER TABLE "clubs" ADD CONSTRAINT "clubs_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "memberships"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "invitations" ADD CONSTRAINT "invitations_club_id_fkey" FOREIGN KEY ("club_id") REFERENCES "clubs"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "invitations" ADD CONSTRAINT "invitations_inviter_id_fkey" FOREIGN KEY ("inviter_id") REFERENCES "memberships"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "invitations" ADD CONSTRAINT "invitations_accepted_by_user_id_fkey" FOREIGN KEY ("accepted_by_user_id") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Profile" ADD CONSTRAINT "Profile_person_id_fkey" FOREIGN KEY ("person_id") REFERENCES "persons"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "player_profiles" ADD CONSTRAINT "player_profiles_profile_id_fkey" FOREIGN KEY ("profile_id") REFERENCES "Profile"("id") ON DELETE CASCADE ON UPDATE CASCADE;

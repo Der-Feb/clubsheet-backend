@@ -1,34 +1,63 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { ENMembershipStatus } from '@prisma/client';
-import { ResourceNotFoundException } from '../common/exceptions/resource-not-found';
+import { ResourceNotFoundException } from "@common/exceptions/resource-not-found";
+import { parsePrismaError } from "@common/utils/error-handler";
+import { Injectable, InternalServerErrorException } from "@nestjs/common";
+import { ENMembershipStatus, ENMembershipType } from "@prisma/client";
+import { AuditLogsService } from "src/audit-logs/audit-logs.service";
+import { PrismaService } from "src/prisma/prisma.service";
+import { ENAuditCategory } from '@generated/prisma/en-audit-category.enum';
 
 @Injectable()
 export class MembershipService {
-    constructor(
-        private readonly prisma: PrismaService,
-    ) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly AuditLogService: AuditLogsService,
+  ) {}
 
-    // revoke any active membership that a user has
-    // The user in the system has only one active membership per club
-    public async revokeActiveMembershipOfClub(user_id: string, person_id: string, club_id: string) {
-        const membership = await this.prisma.membership.findFirst({
-            where: {
-                personId: person_id,
-                clubId: club_id,
-                person: { user: { id: user_id } },
-            },
-            select: { id: true },
+  public async createMembership(
+    personId: string,
+    clubId: string,
+    types: ENMembershipType 
+  ) {
+    const personExists = await this.prisma.person.findUnique({ where: { id: personId } });
+    if (!personExists) 
+      throw new ResourceNotFoundException(`Person '${personId}' not found`, 'Person');
+    const clubExists = await this.prisma.club.findUnique({ where: { id: clubId } });
+    if (!clubExists) 
+      throw new ResourceNotFoundException(`Club '${clubId}' not found`, 'Club');
+    
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        await this.AuditLogService.createLog({
+          category: ENAuditCategory.MEMBERSHIP,
+          action: 'CREATE',
+          entityType: 'Membership',
+          description: 'Membership created successfully.',
+          metadata: { personId, clubId, types }
         });
 
-        if (!membership)
-            throw new ResourceNotFoundException('Active membership not found', 'Membership');
-
-        await this.prisma.membership.update({
-            where: { id: membership.id },
-            data: {
-                status: ENMembershipStatus.SUSPENDED,
-            },
+        return tx.membership.create({
+          data: {
+            personId, clubId,
+            joinedAt: new Date(),
+            types: { create: { type: types } }
+          }
         });
+      });
+    } catch (error) {
+      throw new InternalServerErrorException(parsePrismaError(error));
     }
+  }
+
+  public async suspendMembership(
+    membershipId: string
+  ) {
+    const membershipUpdate = await this.prisma.membership.update({
+      where: { id: membershipId },
+      data: {
+        status: ENMembershipStatus.SUSPENDED,
+      }
+    });
+    if (!membershipUpdate) 
+      throw new ResourceNotFoundException(`Membership '${membershipId}' not found`, 'Membership');
+  }
 }

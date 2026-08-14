@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { generateAuditDescription } from './audit.utils';
-import { ENAuditCategory } from '@prisma/client';
+import { ENAuditCategory } from '@generated/prisma/en-audit-category.enum';
+
 
 @Injectable()
 export class AuditLogsService {

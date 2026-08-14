@@ -29,12 +29,12 @@ export class EmailVerifiedGuard implements CanActivate {
     return true;
   }
 
-      private getRequest(context: ExecutionContext) {
-          if (context.getType().toString() === 'graphql') {
-              const gqlContext = GqlExecutionContext.create(context);
-              return gqlContext.getContext().req;
-          }
-          
-          return context.switchToHttp().getRequest();
-      }
+  private getRequest(context: ExecutionContext) {
+  if (context.getType().toString() === 'graphql') {
+    const gqlContext = GqlExecutionContext.create(context);
+    return gqlContext.getContext().req;
+  }
+
+  return context.switchToHttp().getRequest();
+  }
 }

@@ -13,6 +13,7 @@ import { InvitationController } from './invitation/invitation.controller';
 import { InvitationModule } from './invitation/invitation.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TasksService } from './tasks/tasks.service';
+import { PermissionModule } from './permission/permission.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { TasksService } from './tasks/tasks.service';
     CommunicationModule,
     MembershipModule,
     InvitationModule,
+    PermissionModule,
   ],
   providers: [AppResolver, TasksService],
   controllers: [InvitationController],

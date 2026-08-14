@@ -10,6 +10,7 @@ enum ENAuditCategory {
   MEDICAL
   FINANCE
   SYSTEM
+  MEMBERSHIP
 }
 
 model AuditLog {

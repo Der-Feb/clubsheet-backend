@@ -1,6 +1,6 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { PERMISSIONS_KEY, IPermissionsMetadata } from '../decorators/require-permissions.decorator';
+import { PERMISSIONS_KEY, IPermissionsMetadata } from '@common/decorators/require-permissions.decorator';
 import { GqlExecutionContext } from '@nestjs/graphql';
 
 @Injectable()
