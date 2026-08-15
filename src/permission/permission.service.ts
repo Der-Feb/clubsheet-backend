@@ -1,13 +1,16 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { ENMembershipStatus, ENPermissionScope, Membership } from '@prisma/client';
+import { ENAuditCategory, ENMembershipStatus, ENPermissionScope, Membership } from '@prisma/client';
 import { ResourceNotFoundException } from '@common/exceptions/resource-not-found';
+import { PrismaService } from '../prisma/prisma.service';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
+import { TActiveMembershipPayload } from '@common/guards/active-membership.guard';
 
 @Injectable()
 export class PermissionService {
-    constructor(
-        private readonly prisma: PrismaService
-    ) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditLogsService: AuditLogsService
+  ) {}
 
   private async membershipAllData(membershipId: string) {
     return await this.prisma.membership.findUnique({
@@ -61,6 +64,14 @@ export class PermissionService {
       skipDuplicates: true,
     });
 
+    await this.auditLogsService.createLog({
+      category: ENAuditCategory.AUTH,
+      action: 'syncPermission',
+      entityType: 'role',
+      metadata: { rolePermissionsToSync },
+      createdBy: (adminMembership as TActiveMembershipPayload)?.person?.user?.id,
+    });
+
     return {
       syncedCount: result.count,
       message: "Role permissions synced successfully.",
@@ -100,6 +111,7 @@ export class PermissionService {
     targetMembershipId: string,
     permissionCode: string,
     scope: ENPermissionScope = ENPermissionScope.CLUB,
+    user_id: string,
   ) {
     const permission = await this.prisma.permission.findUnique({
       where: { code: permissionCode },
@@ -108,15 +120,27 @@ export class PermissionService {
     if (!permission) 
       throw new ResourceNotFoundException(`Permission '${permissionCode}' not found`, 'Permission');
 
-    return this.prisma.membershipPermission.delete({
-      where: {
-        membershipId_permissionId_scope: {
-          membershipId: targetMembershipId,
-          permissionId: permission.id,
-          scope,
+    await this.prisma.$transaction(async(tx) => {
+      await tx.membershipPermission.delete({
+        where: {
+          membershipId_permissionId_scope: {
+            membershipId: targetMembershipId,
+            permissionId: permission.id,
+            scope,
+          }
         }
-      }
+      });
+
+      await this.auditLogsService.createLog({
+        category: ENAuditCategory.AUTH,
+        action: 'revokePermission',
+        entityType: 'permission',
+        metadata: { permissionCode, scope },
+        createdBy: user_id
+      });
     });
+
+    return {}
   }
 }
 

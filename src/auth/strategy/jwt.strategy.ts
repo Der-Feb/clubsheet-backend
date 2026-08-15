@@ -4,6 +4,17 @@ import { ExtractJwt, Strategy } from "passport-jwt";
 import { ConfigService } from "@nestjs/config"; // 1. Import ConfigService
 import { TPayload } from "../auth.types";
 
+export type TUserJWTPayload = {
+    user_id: string;
+    person_id: string;
+};
+
+declare global {
+  namespace Express {
+    interface User extends TUserJWTPayload {}
+  }
+}
+
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     constructor(private readonly configService: ConfigService) {
