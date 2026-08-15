@@ -1,8 +1,6 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from './prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
-import { GraphqlModule } from './graphql/graphql.module';
-import { AppResolver } from './app.resolver';
 import { AuthModule } from './auth/auth.module';
 import { AuditLogsModule } from './audit-logs/audit-logs.module';
 import { ClubModule } from './club/club.module';
@@ -14,12 +12,12 @@ import { InvitationModule } from './invitation/invitation.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TasksService } from './tasks/tasks.service';
 import { PermissionModule } from './permission/permission.module';
+import { RoleModule } from './role/role.module';
 
 @Module({
   imports: [
     PrismaModule,
     ConfigModule.forRoot({ isGlobal: true }),
-    GraphqlModule,
     ScheduleModule.forRoot(),
     AuthModule,
     AuditLogsModule,
@@ -29,8 +27,9 @@ import { PermissionModule } from './permission/permission.module';
     MembershipModule,
     InvitationModule,
     PermissionModule,
+    RoleModule,
   ],
-  providers: [AppResolver, TasksService],
+  providers: [TasksService],
   controllers: [InvitationController],
 })
 export class AppModule {}
