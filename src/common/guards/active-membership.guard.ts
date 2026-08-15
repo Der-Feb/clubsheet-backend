@@ -1,12 +1,18 @@
 import { CanActivate, ExecutionContext, UnauthorizedException } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
-import { ENMembershipStatus, Membership } from "@prisma/client";
-import { GqlExecutionContext } from "@nestjs/graphql";
+import { ENMembershipStatus, Prisma } from "@prisma/client";
+
+export type ActiveMembershipPayload = Prisma.MembershipGetPayload<{
+  include: {
+    permissions: { include: { permission: true } };
+    club: true;
+  };
+}>;
 
 declare global {
   namespace Express {
     interface Request {
-      activeMembership?: Membership;
+      activeMembership?: ActiveMembershipPayload;
     }
   }
 }
@@ -47,11 +53,6 @@ export class ActiveMembershipGuard implements CanActivate {
     }
 
   private getRequest(context: ExecutionContext) {
-    if (context.getType().toString() === 'graphql') {
-      const gqlContext = GqlExecutionContext.create(context);
-      return gqlContext.getContext().req;
-    }
-
     return context.switchToHttp().getRequest();
   }
 }

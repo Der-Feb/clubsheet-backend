@@ -1,7 +1,6 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PERMISSIONS_KEY, IPermissionsMetadata } from '@common/decorators/require-permissions.decorator';
-import { GqlExecutionContext } from '@nestjs/graphql';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
@@ -43,11 +42,6 @@ export class PermissionsGuard implements CanActivate {
   }
 
   private getRequest(context: ExecutionContext) {
-      if (context.getType().toString() === 'graphql') {
-          const gqlContext = GqlExecutionContext.create(context);
-          return gqlContext.getContext().req;
-      }
-
-      return context.switchToHttp().getRequest();
+    return context.switchToHttp().getRequest();
   }
 }
