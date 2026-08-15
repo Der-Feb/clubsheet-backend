@@ -2,8 +2,8 @@ import { ENGender } from '@prisma/client';
 import { IntersectionType } from '@nestjs/mapped-types';
 import { IsEmail, IsString, MinLength, IsDate, MaxDate, IsEnum, IsISO31661Alpha2 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
-import nationalities from 'i18n-nationality';
-import countries from 'i18n-iso-countries';
+import * as nationalities from 'i18n-nationality';
+import * as countries from 'i18n-iso-countries';
 
 nationalities.registerLocale(require('i18n-nationality/langs/en.json'));
 countries.registerLocale(require('i18n-iso-countries/langs/en.json'));

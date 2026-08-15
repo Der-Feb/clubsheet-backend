@@ -1,41 +1,41 @@
 import { Optional } from "@nestjs/common";
 import { ENMembershipType } from "@prisma/client";
 import { ArrayMinSize, IsArray, IsEmail, IsEnum, IsISO31661Alpha2, IsNotEmpty, IsOptional, IsString } from "class-validator";
-import countries from 'i18n-iso-countries';
+import * as countries from 'i18n-iso-countries';
 import { Transform } from "class-transformer";
 
 countries.registerLocale(require('i18n-iso-countries/langs/en.json'));
 
 export class CreateClubDto {
-    @IsString()
-    name!: string;
+  @IsString()
+  name!: string;
 
-    @Optional()
-    @IsString()
-    shortName?: string;
+  @Optional()
+  @IsString()
+  shortName?: string;
 
-    @Optional()
-    @IsString()
-    logo?: string;
+  @Optional()
+  @IsString()
+  logo?: string;
 
-    @IsString()
-    @Transform(({ value }) => {
-        if (typeof value !== 'string') return value;
+  @IsString()
+  @Transform(({ value }) => {
+    if (typeof value !== 'string') return value;
 
-        const cleaned = value.trim().toLowerCase();
-        const countryCode = countries.getAlpha2Code(cleaned, 'en');
+    const cleaned = value.trim().toLowerCase();
+    const countryCode = countries.getAlpha2Code(cleaned, 'en');
 
-        if (countryCode) return countryCode.toUpperCase();
+    if (countryCode) return countryCode.toUpperCase();
 
-        return cleaned.toUpperCase();
-    })
-    @IsISO31661Alpha2({ message: 'Invalid Country' })
-    country!: string;
+    return cleaned.toUpperCase();
+  })
+  @IsISO31661Alpha2({ message: 'Invalid Country' })
+  country!: string;
 
-    @IsArray()
-    @ArrayMinSize(1, { message: "At least one membership type must be selected" })
-    @IsEnum(ENMembershipType, { each: true, message: "Each membership type must be of valid value" })
-    membershipTypes!: ENMembershipType[];
+  @IsArray()
+  @ArrayMinSize(1, { message: "At least one membership type must be selected" })
+  @IsEnum(ENMembershipType, { each: true, message: "Each membership type must be of valid value" })
+  membershipTypes!: ENMembershipType[];
 }
 
 export class UpdateClubDto {
