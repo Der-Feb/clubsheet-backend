@@ -1,10 +1,9 @@
 import { ResourceNotFoundException } from "@common/exceptions/resource-not-found";
 import { parsePrismaError } from "@common/utils/error-handler";
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
-import { ENMembershipStatus, ENMembershipType } from "@prisma/client";
+import { ENMembershipStatus, ENMembershipType, ENAuditCategory } from "@prisma/client";
 import { AuditLogsService } from "src/audit-logs/audit-logs.service";
 import { PrismaService } from "src/prisma/prisma.service";
-import { ENAuditCategory } from '@generated/prisma/en-audit-category.enum';
 
 @Injectable()
 export class MembershipService {
@@ -59,5 +58,15 @@ export class MembershipService {
     });
     if (!membershipUpdate) 
       throw new ResourceNotFoundException(`Membership '${membershipId}' not found`, 'Membership');
+
+    await this.AuditLogService.createLog({
+      category: ENAuditCategory.MEMBERSHIP,
+      action: 'SUSPEND',
+      entityType: 'Membership',
+      description: 'Membership suspended successfully.',
+      metadata: { membershipId }
+    });
+
+    return membershipUpdate;
   }
 }
