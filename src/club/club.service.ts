@@ -1,9 +1,10 @@
-import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateClubDto, UpdateClubDto } from './club.dto';
 import { ResourceNotFoundException } from '../common/exceptions/resource-not-found';
 import { ENAuditCategory, ENClubStatus, ENMembershipStatus, ENMembershipType } from '@prisma/client';
+import { parsePrismaError } from '@common/utils/error-handler';
 
 @Injectable()
 export class ClubService {
@@ -147,7 +148,7 @@ export class ClubService {
 
         // Create audit log with membership ID included
         await this.auditLogsService.createLog({
-            category: ENAuditCategory.CLUB,
+            category: ENAuditCategory.CLUB as ENAuditCategory,
             action: "updateClub",
             entityType: "Club",
             description: "Updating the club details",
@@ -165,5 +166,55 @@ export class ClubService {
             message: "Club updated successfully",
             data: updatedClub,
         };
+    }
+
+    public async myClubs(personId: string) {
+        try {
+            return await this.prisma.club.findMany({
+                where: {
+                    memberships: { 
+                        some: { 
+                            personId,
+                            status: ENMembershipStatus.ACTIVE,
+                        } 
+                    }
+                }
+            });
+        } catch (error) {
+            throw new InternalServerErrorException(parsePrismaError(error));
+        }
+    }
+
+    /**
+     * The permission is to club.delete
+     * @param membershipId 
+     * @param clubId 
+     */
+    public async archiveClub(clubId: string, membershipId: string) {
+        await this.prisma.club.update({
+            where: {
+                id: clubId,
+            },
+            data: {
+                status: ENClubStatus.DELETED,
+                memberships: {
+                    updateMany: {
+                        where: {},
+                        data: { status: ENMembershipStatus.SUSPENDED },
+                    }
+                }
+            }
+        });
+
+        await this.auditLogsService.createLog({
+            category: ENAuditCategory.CLUB,
+            action: "clubArchive",
+            metadata: { clubId, membershipId },
+            entityType: 'club',
+        });
+    }
+
+    public async getClub(clubId: string) {
+        
     }
 }
