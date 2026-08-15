@@ -7,10 +7,7 @@ ClubSheet is a football club management platform designed to manage clubs, teams
 The backend is built with:
 
 * **Framework:** NestJS
-* **API Architecture:**
-
-  * GraphQL for application data operations
-  * REST API for authentication and security flows
+* **API Architecture:** REST API for all endpoints
 * **ORM:** Prisma
 * **Database:** PostgreSQL
 * **Migration Tool:** Prisma Migrations
@@ -51,53 +48,37 @@ Business logic belongs to the domain module responsible for it.
 
 # API Design Rules
 
-## GraphQL
+## REST API
 
-GraphQL is the primary application API.
+REST is the primary application API.
 
-Use GraphQL for:
+Use REST for all endpoints:
 
+* Authentication and security workflows
 * Club management
 * Member management
 * Team operations
 * Profiles
 * Reports
-* Internal application workflows
+* All application workflows
 
 Rules:
 
-* Keep resolvers thin.
+* Keep controllers thin.
 * Business logic belongs in services.
-* Use DTOs/input types for mutations.
-* Avoid putting database queries directly inside resolvers.
+* Use DTOs for request/response validation.
+* Avoid putting database queries directly inside controllers.
 
 Example:
 
 ```
-Resolver
+Controller
    ↓
 Service
    ↓
 Repository / Prisma
    ↓
 Database
-```
-
----
-
-## REST API
-
-REST is used for authentication and security-sensitive operations.
-
-Examples:
-
-```
-POST /auth/login
-POST /auth/register
-POST /auth/refresh
-POST /auth/logout
-POST /auth/forgot-password
-POST /auth/reset-password
 ```
 
 Authentication responsibilities:
@@ -108,8 +89,6 @@ Authentication responsibilities:
 * Session handling
 * Email verification
 * Security workflows
-
-Do not force authentication flows into GraphQL.
 
 ---
 
@@ -216,8 +195,6 @@ Passwords:
 
 * Never store plain text passwords.
 * Use secure hashing.
-* Never expose password fields through GraphQL.
-
 Tokens:
 
 * Access tokens should be short-lived.
@@ -241,7 +218,7 @@ STAFF
 MEMBER
 ```
 
-Do not hardcode permissions inside controllers/resolvers.
+Do not hardcode permissions inside controllers.
 
 Use guards and decorators.
 
@@ -287,7 +264,6 @@ Use NestJS conventions:
 ```
 user.module.ts
 user.service.ts
-user.resolver.ts
 user.controller.ts
 user.dto.ts
 ```
@@ -395,7 +371,7 @@ When modifying the project:
 4. Do not change database models without considering migration impact.
 5. Preserve historical business data.
 6. Avoid breaking API contracts.
-7. Keep controllers/resolvers thin.
+7. Keep controllers thin.
 8. Put business rules inside services.
 9. Add tests for new critical functionality.
 10. Update documentation when architecture changes.
