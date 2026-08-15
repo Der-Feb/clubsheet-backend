@@ -2,17 +2,23 @@ import { CanActivate, ExecutionContext, UnauthorizedException } from "@nestjs/co
 import { PrismaService } from "../../prisma/prisma.service";
 import { ENMembershipStatus, Prisma } from "@prisma/client";
 
-export type ActiveMembershipPayload = Prisma.MembershipGetPayload<{
+export type TActiveMembershipPayload = Prisma.MembershipGetPayload<{
   include: {
     permissions: { include: { permission: true } };
     club: true;
+    person: {
+      include: {
+        user: true,
+      }
+    },
+    roles: true;
   };
 }>;
 
 declare global {
   namespace Express {
     interface Request {
-      activeMembership?: ActiveMembershipPayload;
+      activeMembership?: TActiveMembershipPayload;
     }
   }
 }
@@ -40,7 +46,13 @@ export class ActiveMembershipGuard implements CanActivate {
           },
           include: {
             permissions: { include: { permission: true } },
-            club: true
+            club: true,
+            roles: true,
+            person: {
+              include: {
+                user: true,
+              }
+            }
           }
         });
 

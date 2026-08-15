@@ -14,7 +14,7 @@ enum ENAuditCategory {
 }
 
 model AuditLog {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
   category ENAuditCategory
   action String
   entityType String

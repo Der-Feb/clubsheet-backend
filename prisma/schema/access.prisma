@@ -4,7 +4,7 @@ enum ENGender {
 }
 
 model Person {
-  id             String   @id @default(cuid())
+  id             String   @id @default(cuid(2))
   firstName      String   @map("first_name")
   lastName       String   @map("last_name")
   gender         ENGender
@@ -24,7 +24,7 @@ model Person {
 }
 
 model User {
-  id             String  @id @default(cuid())
+  id             String  @id @default(cuid(2))
   email          String  @unique
   passwordHash   String  @map("password_hash")
 
@@ -54,7 +54,7 @@ enum ENUserTokenStatus {
 }
 
 model UserToken {
-  id        String        @id @default(cuid())
+  id        String        @id @default(cuid(2))
   type      ENUserTokenType
   hash      String        @unique
 
@@ -89,7 +89,7 @@ enum ENMembershipType {
 }
 
 model Membership {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
   status ENMembershipStatus @default(ACTIVE)
   types   MembershipType[]
@@ -148,7 +148,7 @@ enum ENPermissionAction {
 }
 
 model Permission {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
   code        String @unique
   name        String
@@ -167,7 +167,7 @@ model Permission {
 }
 
 model Role {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
   code        String @unique
   name        String
@@ -192,7 +192,7 @@ enum ENPermissionScope {
 }
 
 model RolePermission {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
   roleId String @map("role_id")
   role   Role   @relation(fields: [roleId], references: [id])
@@ -208,7 +208,7 @@ model RolePermission {
 }
 
 model MembershipPermission {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
   membershipId String @map("membership_id")
   membership   Membership @relation(fields: [membershipId], references: [id])
@@ -223,7 +223,7 @@ model MembershipPermission {
 }
 
 model MembershipRole {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
   membershipId String @map("membership_id")
   membership   Membership @relation(fields: [membershipId], references: [id])
@@ -248,7 +248,7 @@ enum ENClubStatus {
 }
 
 model Club {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid(2))
   name      String
   shortName String?  @map("short_name")
   logo      String?
@@ -275,7 +275,7 @@ enum ENInvitationStatus {
 }
 
 model Invitation {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
   email String
 

@@ -2,8 +2,8 @@ import { ResourceNotFoundException } from "@common/exceptions/resource-not-found
 import { parsePrismaError } from "@common/utils/error-handler";
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { ENMembershipStatus, ENMembershipType, ENAuditCategory } from "@prisma/client";
-import { AuditLogsService } from "src/audit-logs/audit-logs.service";
-import { PrismaService } from "src/prisma/prisma.service";
+import { PrismaService } from "../prisma/prisma.service";
+import { AuditLogsService } from "../audit-logs/audit-logs.service";
 
 @Injectable()
 export class MembershipService {
@@ -48,7 +48,8 @@ export class MembershipService {
   }
 
   public async suspendMembership(
-    membershipId: string
+    membershipId: string,
+    adminUserId: string,
   ) {
     const membershipUpdate = await this.prisma.membership.update({
       where: { id: membershipId },
@@ -64,7 +65,8 @@ export class MembershipService {
       action: 'SUSPEND',
       entityType: 'Membership',
       description: 'Membership suspended successfully.',
-      metadata: { membershipId }
+      metadata: { membershipId },
+      createdBy: adminUserId,
     });
 
     return membershipUpdate;

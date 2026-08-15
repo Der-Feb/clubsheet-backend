@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, Req, UseGuards } from '@nestjs/common';
 import { ClubService } from './club.service';
 import { PassportJwtGuard } from '../common/guards/passport.guard';
 import { EmailVerifiedGuard } from '../common/guards/email-verified.guard';
@@ -6,11 +6,17 @@ import { RequirePermissions } from '../common/decorators/require-permissions.dec
 import { CreateClubDto, UpdateClubDto } from './club.dto';
 import { CurrentUser } from '../common/decorators/current-user';
 import { TPayload } from '../auth/auth.types';
+import { Request } from 'express';
 
 @Controller('club')
 @UseGuards(PassportJwtGuard, EmailVerifiedGuard)
 export class ClubController {
   constructor(private clubService: ClubService) {}
+
+  @Get('my')
+  async getMyClubs(@Req() req: Request) {
+    return req.activeMembership?.club;
+  }
 
   @Post('register')
   @RequirePermissions(true, ['CLUB_WRITE'])

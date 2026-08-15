@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "target": "ES2023",
 
     "declaration": true,
@@ -24,9 +24,9 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
-    "baseUrl": "./",
+
     "paths": {
-      "@common/*": ["src/common/*"]
+      "@common/*": ["./src/common/*"]
     }
   }
 }

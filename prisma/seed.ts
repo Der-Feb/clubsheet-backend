@@ -27,6 +27,10 @@ const permissionsData = [
 
   { code: 'PLAYER_READ', name: 'Read Player Information', module: ENPermissionModule.ACCESS, action: ENPermissionAction.READ, description: 'View player details' },
   { code: 'PLAYER_WRITE', name: 'Write Player Information', module: ENPermissionModule.ACCESS, action: ENPermissionAction.WRITE, description: 'Write player details' },
+
+  { code: 'MEMBERSHIP_READ', name: 'Read Membership Information', module: ENPermissionModule.ACCESS, action: ENPermissionAction.READ, description: 'View membership details' },
+  { code: 'MEMBERSHIP_WRITE', name: 'Write Membership Information', module: ENPermissionModule.ACCESS, action: ENPermissionAction.WRITE, description: 'Write membership details' },
+  { code: 'MEMBERSHIP_SUSPEND', name: 'Suspend Membership', module: ENPermissionModule.ACCESS, action: ENPermissionAction.DELETE, description: 'Suspend membership' },
 ];
 
 const roleData = [

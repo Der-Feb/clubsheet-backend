@@ -1,6 +1,6 @@
 
 model Profile {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
   personId String @unique @map("person_id")
   person Person @relation(fields: [personId], references: [id])
@@ -26,7 +26,7 @@ enum ENPreferredFoot {
 }
 
 model PlayerProfile {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
   profileId String  @unique @map("profile_id")
   profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
