@@ -26,6 +26,14 @@ export class RoleController {
     return await this.roleService.getRolesInClub(req.activeMembership?.clubId!);
   }
 
+  @Get('/:role_id')
+  public async getRole(
+    @Param('role_id', ParseCuidPipe) role_id: string,
+    @CurrentMembership() membership: TActiveMembershipPayload,
+  ) {
+    return await this.roleService.getRole(role_id, membership.clubId, membership.id);
+  }
+
   @Post()
   @RequirePermissions(true, ["ROLE_WRITE"])
   public async createRole(

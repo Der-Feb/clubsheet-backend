@@ -26,6 +26,32 @@ export class RoleService {
     });
   }
 
+  public async getRole(role_id: string, clubId: string, membershipId: string) {
+    const role = await this.prisma.role.findUnique({ 
+      where: { id: role_id },
+    });
+
+    if (!role) 
+      throw new ResourceNotFoundException('Role not found', 'role');
+
+    if (!role.isSystem)
+      if (role.clubId !== clubId)
+        throw new BadRequestException('Role does not belong to the club');
+
+    const membershipRole = await this.prisma.membershipRole.findUnique({
+      where: {
+        membershipId_roleId: {
+          membershipId, roleId: role_id
+        }
+      }
+    });
+    
+    if (!membershipRole)
+      throw new BadRequestException('Role is not assigned to you');
+      
+    return {...role, ...membershipRole};
+  }
+
   public async updatedClubRole(role_id: string, data: UpdateRoleDto, clubId: string, user_id: string) {
     const { name, description } = data;
     const role = await this.prisma.role.findUnique({ where: { id: role_id } });
