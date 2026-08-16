@@ -8,7 +8,6 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
-
 const permissionsData = [
   // CLUB MODULE
   { code: 'CLUB_READ', name: 'Read Club Information', module: ENPermissionModule.ACCESS, action: ENPermissionAction.READ, description: 'View club details' },

@@ -169,14 +169,16 @@ model Permission {
 model Role {
   id String @id @default(cuid(2))
 
-  code        String @unique
-  name        String
-  description String
+  code        String @unique @db.VarChar(10)
+  name        String @db.VarChar(10)
+  description String @db.VarChar(100)
 
   isSystem Boolean @default(true) @map("is_system")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+
+  clubId String? @map("club_id")
 
   memberships MembershipRole[]
   permissions RolePermission[]
