@@ -30,8 +30,3 @@ export class CreateMembershipDto {
   @IsCuid2()
   personId!: string;
 }
-
-export class MembershipParamsDto {
-  @IsCuid2({ message: 'membershipId must be a valid CUID2' })
-  membershipId: string;
-}

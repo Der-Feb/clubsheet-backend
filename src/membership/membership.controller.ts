@@ -5,10 +5,11 @@ import { PassportJwtGuard } from '@common/guards/passport.guard';
 import { MembershipService } from './membership.service';
 import { Request } from 'express';
 import { RequirePermissions } from '@common/decorators/require-permissions.decorator';
-import { CreateMembershipDto, MembershipParamsDto } from './membership.dto';
+import { CreateMembershipDto } from './membership.dto';
 import { CurrentMembership, CurrentUser } from '@common/decorators/current-user';
 import { IsCuid2 } from '@common/decorators/is-cuid.decorator';
 import { TUserJWTPayload } from '../auth/strategy/jwt.strategy';
+import { ParseCuidPipe } from '@common/pipes/cuid-pipe';
 
 @Controller('membership')
 @UseGuards(PassportJwtGuard, EmailVerifiedGuard, ActiveMembershipGuard)
@@ -32,9 +33,9 @@ export class MembershipController {
   @Put('suspend/:membershipId')
   @RequirePermissions(true, ['MEMBERSHIP_SUSPEND'])
   public async suspendMembership(
-    @Param('membershipId') param: MembershipParamsDto,
+    @Param('membershipId', ParseCuidPipe) membershipId: string,
     @CurrentUser() currentUser: TUserJWTPayload,
   ) {
-    return await this.membershipService.suspendMembership(param.membershipId, currentUser.user_id);
+    return await this.membershipService.suspendMembership(membershipId, currentUser.user_id);
   }
 }
