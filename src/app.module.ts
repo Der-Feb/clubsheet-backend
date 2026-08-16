@@ -13,6 +13,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { TasksService } from './tasks/tasks.service';
 import { PermissionModule } from './permission/permission.module';
 import { RoleModule } from './role/role.module';
+import { ProfileModule } from './profile/profile.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { RoleModule } from './role/role.module';
     InvitationModule,
     PermissionModule,
     RoleModule,
+    ProfileModule,
   ],
   providers: [TasksService],
   controllers: [InvitationController],

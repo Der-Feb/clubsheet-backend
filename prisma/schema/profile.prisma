@@ -5,6 +5,8 @@ model Profile {
   personId String @unique @map("person_id")
   person Person @relation(fields: [personId], references: [id])
 
+  profilePic String?
+
   playerProfile PlayerProfile?
 
   createdAt DateTime @default(now()) @map("created_at")
