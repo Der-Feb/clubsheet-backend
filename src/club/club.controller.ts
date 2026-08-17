@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Put, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { ClubService } from './club.service';
 import { PassportJwtGuard } from '../common/guards/passport.guard';
 import { EmailVerifiedGuard } from '../common/guards/email-verified.guard';
@@ -22,17 +30,27 @@ export class ClubController {
   @RequirePermissions(true, ['CLUB_WRITE'])
   public async createClub(
     @Body() createClubDto: CreateClubDto,
-    @CurrentUser() currentUser: any
+    @CurrentUser() currentUser: any,
   ) {
-    return await this.clubService.createClub(createClubDto, currentUser.user_id);
+    return await this.clubService.createClub(
+      createClubDto,
+      currentUser.user_id,
+    );
   }
 
   @Put('update')
   @RequirePermissions(true, ['CLUB_WRITE'])
   public async updateClub(
     @Body() updateClubDto: UpdateClubDto,
-    @CurrentUser() currentUser: any
+    @CurrentUser() currentUser: any,
   ) {
-    return await this.clubService.updateClub(updateClubDto, currentUser.user_id, currentUser.person_id);
+    return await this.clubService.updateClub(
+      updateClubDto,
+      currentUser.user_id,
+      currentUser.person_id,
+    );
   }
+
+  @Get('/workspace')
+  public async() {}
 }
