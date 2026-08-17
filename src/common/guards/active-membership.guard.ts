@@ -1,5 +1,5 @@
 import { CanActivate, ExecutionContext, UnauthorizedException } from "@nestjs/common";
-import { PrismaService } from "../../prisma/prisma.service";
+import { PrismaService } from "@infrastructure/prisma/prisma.service";
 import { ENMembershipStatus, Prisma } from "@prisma/client";
 
 export type TActiveMembershipPayload = Prisma.MembershipGetPayload<{

@@ -1,41 +1,43 @@
 import { Module } from '@nestjs/common';
-import { PrismaModule } from './prisma/prisma.module';
+import { PrismaModule } from './infrastructure/prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
-import { AuthModule } from './auth/auth.module';
-import { AuditLogsModule } from './audit-logs/audit-logs.module';
-import { ClubModule } from './club/club.module';
-import { UserTokenModule } from './user-token/user-token.module';
-import { CommunicationModule } from './communication/communication.module';
-import { MembershipModule } from './membership/membership.module';
-import { InvitationController } from './invitation/invitation.controller';
-import { InvitationModule } from './invitation/invitation.module';
+import { AuthModule } from './core/iam/auth/auth.module';
+import { AuditLogsModule } from './infrastructure/audit-logs/audit-logs.module';
+import { ClubModule } from './core/club/club/club.module';
+import { UserTokenModule } from './core/iam/user-token/user-token.module';
+import { CommunicationModule } from './infrastructure/communication/communication.module';
+import { MembershipModule } from './core/iam/membership/membership.module';
+import { InvitationModule } from './core/iam/invitation/invitation.module';
 import { ScheduleModule } from '@nestjs/schedule';
-import { TasksService } from './tasks/tasks.service';
-import { PermissionModule } from './permission/permission.module';
-import { RoleModule } from './role/role.module';
-import { ProfileModule } from './profile/profile.module';
-import { FeatureModule } from './feature/feature.module';
-import { PlayerModule } from './player/player.module';
+import { TasksService } from './features/scheduling/task/tasks.service';
+import { PermissionModule } from './core/iam/permission/permission.module';
+import { RoleModule } from './core/iam/role/role.module';
+import { ProfileModule } from './core/club/profile/profile.module';
+import { TeamModule } from './features/team/team/team.module';
+import { PlayerModule } from './core/player/player/player.module';
 
 @Module({
   imports: [
     PrismaModule,
     ConfigModule.forRoot({ isGlobal: true }),
     ScheduleModule.forRoot(),
+    // Core IAM modules
     AuthModule,
-    AuditLogsModule,
-    ClubModule,
     UserTokenModule,
-    CommunicationModule,
     MembershipModule,
     InvitationModule,
     PermissionModule,
     RoleModule,
+    // Core business modules
+    ClubModule,
     ProfileModule,
-    FeatureModule,
     PlayerModule,
+    // Feature modules
+    TeamModule,
+    // Infrastructure modules
+    AuditLogsModule,
+    CommunicationModule,
   ],
   providers: [TasksService],
-  controllers: [InvitationController],
 })
 export class AppModule {}

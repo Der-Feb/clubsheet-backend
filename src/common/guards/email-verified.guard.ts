@@ -6,7 +6,7 @@ import {
   ForbiddenException, 
   UnauthorizedException 
 } from "@nestjs/common";
-import { AuthService } from "../../auth/auth.service";
+import { AuthService } from "@core/iam/auth/auth.service";
 
 @Injectable()
 export class EmailVerifiedGuard implements CanActivate {

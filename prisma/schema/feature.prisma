@@ -1,3 +1,16 @@
+enum ENFeature {
+  IAM // Identity and Access Management
+  CLUB
+  TEAM
+  PLAYER
+
+  TRAINING
+  MATCH
+  SIGNING
+  MEDICAL
+  FINANCE
+}
+
 enum ENTrainingStatus {
   SCHEDULED
   COMPLETED
