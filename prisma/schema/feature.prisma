@@ -12,14 +12,14 @@ enum ENTrainingType {
 }
 
 model Training {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
   clubId String @map("club_id")
   club   Club   @relation(fields: [clubId], references: [id])
 
-  teamId String @map("team_id")
-  team   Team   @relation(fields: [teamId], references: [id])
-  types ENTrainingType[]
+  teamId String           @map("team_id")
+  team   Team             @relation(fields: [teamId], references: [id])
+  types  ENTrainingType[]
 
   title       String?
   description String?
@@ -41,24 +41,24 @@ model Training {
 }
 
 model Player {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
-  membershipId String @map("membership_id")
-  membership Membership @relation(fields: [membershipId], references: [id])
+  membershipId String     @map("membership_id")
+  membership   Membership @relation(fields: [membershipId], references: [id])
 
   teamId String @map("team_id")
-  team Team @relation(fields: [teamId], references: [id])
+  team   Team   @relation(fields: [teamId], references: [id])
 
-  joinedAt DateTime @default(now()) @map("joined_at")
+  joinedAt DateTime  @default(now()) @map("joined_at")
   leftAt   DateTime? @map("left_at")
 
-  @@unique([membershipId]) 
+  @@unique([membershipId])
   @@unique([teamId])
   @@map("players")
 }
 
 model Team {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
   clubId String @map("club_id")
   club   Club   @relation(fields: [clubId], references: [id])
@@ -66,8 +66,10 @@ model Team {
   name String @db.VarChar(50)
 
   trainings Training[]
-  players Player[]
+  players   Player[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("teams")
 }

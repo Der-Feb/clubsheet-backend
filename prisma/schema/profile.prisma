@@ -1,17 +1,18 @@
-
 model Profile {
   id String @id @default(cuid())
 
   personId String @unique @map("person_id")
-  person Person @relation(fields: [personId], references: [id])
+  person   Person @relation(fields: [personId], references: [id])
 
-  profilePic String?
+  profilePic    String?        @map("profile_pic")
   playerProfile PlayerProfile?
 
   sendEmailNotification Boolean @default(false) @map("send_email_notification")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("profiles")
 }
 
 // for the players
@@ -35,7 +36,7 @@ model PlayerProfile {
   profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   position      ENPlayerPosition?
-  preferredFoot ENPreferredFoot?
+  preferredFoot ENPreferredFoot?  @map("preferred_foot")
 
   heightCm Decimal? @map("height_cm") @db.Decimal(5, 2)
   weightKg Decimal? @map("weight_kg") @db.Decimal(5, 2)

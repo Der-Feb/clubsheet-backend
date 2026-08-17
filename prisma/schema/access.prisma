@@ -4,7 +4,7 @@ enum ENGender {
 }
 
 model Person {
-  id             String   @id @default(cuid())
+  id             String   @id @default(cuid(2))
   firstName      String   @map("first_name")
   lastName       String   @map("last_name")
   gender         ENGender
@@ -24,12 +24,12 @@ model Person {
 }
 
 model User {
-  id             String  @id @default(cuid())
-  email          String  @unique
-  passwordHash   String  @map("password_hash")
+  id           String @id @default(cuid(2))
+  email        String @unique
+  passwordHash String @map("password_hash")
 
-  isEmailVerified Boolean @default(false)
-  lastLogin      DateTime? @map("last_login")
+  isEmailVerified Boolean   @default(false) @map("is_email_verified")
+  lastLogin       DateTime? @map("last_login")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -38,7 +38,7 @@ model User {
   person   Person @relation(fields: [personId], references: [id])
 
   tokens              UserToken[]
-  acceptedInvitations Invitation[] @relation("UserAcceptedInvitations")
+  acceptedInvitations Invitation[]   @relation("UserAcceptedInvitations")
   seenNotifications   Notification[] @relation("NotificationSeenBy")
   sentNotifications   Notification[] @relation("NotificationSentFor")
 
@@ -56,9 +56,9 @@ enum ENUserTokenStatus {
 }
 
 model UserToken {
-  id        String        @id @default(cuid())
-  type      ENUserTokenType
-  hash      String        @unique
+  id   String          @id @default(cuid(2))
+  type ENUserTokenType
+  hash String          @unique
 
   expiresAt DateTime  @map("expires_at")
   usedAt    DateTime? @map("used_at")
@@ -71,7 +71,6 @@ model UserToken {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@index([userId])
-
   @@map("user_tokens")
 }
 
@@ -91,10 +90,10 @@ enum ENMembershipType {
 }
 
 model Membership {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
   status ENMembershipStatus @default(ACTIVE)
-  types   MembershipType[]
+  types  MembershipType[]
 
   joinedAt DateTime  @map("joined_at")
   endedAt  DateTime? @map("ended_at")
@@ -112,8 +111,8 @@ model Membership {
   permissions   MembershipPermission[]
   assignedRoles MembershipRole[]       @relation("AssignedRoles")
 
-  createdClubs  Club[]                 @relation("ClubCreator")
-  sentInvitations Invitation[]         @relation("MembershipSentInvitations")
+  createdClubs    Club[]       @relation("ClubCreator")
+  sentInvitations Invitation[] @relation("MembershipSentInvitations")
 
   player Player[]
 
@@ -124,12 +123,13 @@ model Membership {
 }
 
 model MembershipType {
-  membershipId  String
-  membership    Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  membershipId String     @map("membership_id")
+  membership   Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
 
-  type          ENMembershipType
+  type ENMembershipType
 
   @@unique([membershipId, type])
+  @@map("membership_types")
 }
 
 enum ENPermissionModule {
@@ -152,7 +152,7 @@ enum ENPermissionAction {
 }
 
 model Permission {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
   code        String @unique
   name        String
@@ -171,7 +171,7 @@ model Permission {
 }
 
 model Role {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
   code        String @unique @db.VarChar(10)
   name        String @db.VarChar(10)
@@ -198,52 +198,49 @@ enum ENPermissionScope {
 }
 
 model RolePermission {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
   roleId String @map("role_id")
   role   Role   @relation(fields: [roleId], references: [id])
 
-  permissionId String @map("permission_id")
+  permissionId String     @map("permission_id")
   permission   Permission @relation(fields: [permissionId], references: [id])
 
   scope ENPermissionScope
 
   @@unique([roleId, permissionId, scope])
-
   @@map("role_permissions")
 }
 
 model MembershipPermission {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
-  membershipId String @map("membership_id")
+  membershipId String     @map("membership_id")
   membership   Membership @relation(fields: [membershipId], references: [id])
 
-  permissionId String @map("permission_id")
-  permission   Permission @relation(fields: [permissionId], references: [id])
-  scope ENPermissionScope
+  permissionId String            @map("permission_id")
+  permission   Permission        @relation(fields: [permissionId], references: [id])
+  scope        ENPermissionScope
 
   @@unique([membershipId, permissionId, scope])
-
   @@map("membership_permissions")
 }
 
 model MembershipRole {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
-  membershipId String @map("membership_id")
+  membershipId String     @map("membership_id")
   membership   Membership @relation(fields: [membershipId], references: [id])
 
   roleId String @map("role_id")
   role   Role   @relation(fields: [roleId], references: [id])
 
-  assignedById String? @map("assigned_by")
+  assignedById String?     @map("assigned_by")
   assignedBy   Membership? @relation("AssignedRoles", fields: [assignedById], references: [id])
 
   assignedAt DateTime @default(now()) @map("assigned_at")
 
   @@unique([membershipId, roleId])
-
   @@map("membership_roles")
 }
 
@@ -254,9 +251,9 @@ enum ENClubStatus {
 }
 
 model Club {
-  id        String   @id @default(cuid())
+  id        String  @id @default(cuid(2))
   name      String
-  shortName String?  @map("short_name")
+  shortName String? @map("short_name")
   logo      String?
   country   String
 
@@ -270,8 +267,8 @@ model Club {
 
   memberships Membership[] @relation("ClubMemberships")
   invitations Invitation[] @relation("ClubInvitations")
-  teams Team[]
-  trainings Training[]
+  teams       Team[]
+  trainings   Training[]
 
   @@index([createdById])
   @@map("clubs")
@@ -283,7 +280,7 @@ enum ENInvitationStatus {
 }
 
 model Invitation {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
   email String
 
@@ -293,17 +290,17 @@ model Invitation {
 
   status ENInvitationStatus @default(PENDING)
 
-  expiresAt DateTime @map("expires_at")
+  expiresAt  DateTime  @map("expires_at")
   acceptedAt DateTime? @map("accepted_at")
 
   clubId String @map("club_id")
-  club Club @relation("ClubInvitations", fields: [clubId], references: [id])
+  club   Club   @relation("ClubInvitations", fields: [clubId], references: [id])
 
-  inviterId String @map("inviter_id")
-  inviter Membership @relation("MembershipSentInvitations", fields: [inviterId], references: [id])
+  inviterId String     @map("inviter_id")
+  inviter   Membership @relation("MembershipSentInvitations", fields: [inviterId], references: [id])
 
   acceptedByUserId String? @map("accepted_by_user_id")
-  acceptedByUser User? @relation("UserAcceptedInvitations", fields: [acceptedByUserId], references: [id])
+  acceptedByUser   User?   @relation("UserAcceptedInvitations", fields: [acceptedByUserId], references: [id])
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -311,6 +308,5 @@ model Invitation {
   @@index([email])
   @@index([clubId])
   @@index([expiresAt])
-
   @@map("invitations")
 }

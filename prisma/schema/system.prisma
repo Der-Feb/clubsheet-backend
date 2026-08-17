@@ -1,4 +1,3 @@
-
 // we wil need an enum
 enum ENAuditCategory {
   AUTH
@@ -14,16 +13,18 @@ enum ENAuditCategory {
 }
 
 model AuditLog {
-  id String @id @default(cuid())
-  category ENAuditCategory
-  action String
-  entityType String
+  id          String          @id @default(cuid(2))
+  category    ENAuditCategory
+  action      String
+  entityType  String          @map("entity_type")
   description String
 
   metadata Json?
 
-  createdBy String? @default("system") //user_id or system
-  createdAt DateTime @default(now())
+  createdBy String?  @default("system") @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("audit_logs")
 }
 
 enum ENNotificationType {
@@ -33,17 +34,19 @@ enum ENNotificationType {
 }
 
 model Notification {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
   type ENNotificationType @default(SYSTEM)
 
-  title String @db.VarChar(20)
+  title       String @db.VarChar(20)
   description String @db.VarChar(100)
 
-  createdBy String? @default("system") //user_id or system
+  createdBy String? @default("system") @map("created_by")
 
-  seenBy User[] @relation("NotificationSeenBy") // people who marked it as seen
+  seenBy  User[] @relation("NotificationSeenBy") // people who marked it as seen
   sentFor User[] @relation("NotificationSentFor") // people the message is intended to reach
 
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("notifications")
 }
