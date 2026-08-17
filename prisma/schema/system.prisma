@@ -14,7 +14,7 @@ enum ENAuditCategory {
 }
 
 model AuditLog {
-  id String @id @default(cuid(2))
+  id String @id @default(cuid())
   category ENAuditCategory
   action String
   entityType String
@@ -23,5 +23,27 @@ model AuditLog {
   metadata Json?
 
   createdBy String? @default("system") //user_id or system
+  createdAt DateTime @default(now())
+}
+
+enum ENNotificationType {
+  SYSTEM
+  TRAINING
+  MATCH
+}
+
+model Notification {
+  id String @id @default(cuid())
+
+  type ENNotificationType @default(SYSTEM)
+
+  title String @db.VarChar(20)
+  description String @db.VarChar(100)
+
+  createdBy String? @default("system") //user_id or system
+
+  seenBy User[] @relation("NotificationSeenBy") // people who marked it as seen
+  sentFor User[] @relation("NotificationSentFor") // people the message is intended to reach
+
   createdAt DateTime @default(now())
 }

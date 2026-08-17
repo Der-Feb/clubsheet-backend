@@ -1,0 +1,73 @@
+enum ENTrainingStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum ENTrainingType {
+  PHYSICAL
+  MENTAL
+  TECHNICAL
+  TACTICAL
+}
+
+model Training {
+  id String @id @default(cuid())
+
+  clubId String @map("club_id")
+  club   Club   @relation(fields: [clubId], references: [id])
+
+  teamId String @map("team_id")
+  team   Team   @relation(fields: [teamId], references: [id])
+  types ENTrainingType[]
+
+  title       String?
+  description String?
+
+  startsAt DateTime @map("starts_at")
+  endsAt   DateTime @map("ends_at")
+
+  location String?
+
+  status ENTrainingStatus @default(SCHEDULED)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([clubId])
+  @@index([teamId])
+  @@index([startsAt])
+  @@map("trainings")
+}
+
+model Player {
+  id String @id @default(cuid())
+
+  membershipId String @map("membership_id")
+  membership Membership @relation(fields: [membershipId], references: [id])
+
+  teamId String @map("team_id")
+  team Team @relation(fields: [teamId], references: [id])
+
+  joinedAt DateTime @default(now()) @map("joined_at")
+  leftAt   DateTime? @map("left_at")
+
+  @@unique([membershipId]) 
+  @@unique([teamId])
+  @@map("players")
+}
+
+model Team {
+  id String @id @default(cuid())
+
+  clubId String @map("club_id")
+  club   Club   @relation(fields: [clubId], references: [id])
+
+  name String @db.VarChar(50)
+
+  trainings Training[]
+  players Player[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+}
