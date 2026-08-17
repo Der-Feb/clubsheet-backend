@@ -7,7 +7,7 @@ import { CurrentMembership, CurrentUser } from '@common/decorators/current-user'
 import { RequirePermissions } from '@common/decorators/require-permissions.decorator';
 import { ParseCuidPipe } from '@common/pipes/cuid-pipe';
 import { CreateTeamDto } from './team.dto';
-import { TUserJWTPayload } from '@core/iam/auth/strategy/jwt.strategy';
+import { TUserJWTPayload } from '@iam/auth/strategy/jwt.strategy';
 
 @Controller('team')
 @UseGuards(PassportJwtGuard, EmailVerifiedGuard, ActiveMembershipGuard)

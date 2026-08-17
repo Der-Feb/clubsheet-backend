@@ -28,8 +28,11 @@
     "paths": {
       "@common/*": ["./src/common/*"],
       "@infrastructure/*": ["./src/infrastructure/*"],
-      "@core/*": ["./src/core/*"],
-      "@features/*": ["./src/features/*"]
+      "@iam/*": ["./src/iam/*"],
+      "@clubs/*": ["./src/clubs/*"],
+      "@players/*": ["./src/players/*"],
+      "@teams/*": ["./src/teams/*"],
+      "@tasks/*": ["./src/tasks/*"]
     }
   }
 }

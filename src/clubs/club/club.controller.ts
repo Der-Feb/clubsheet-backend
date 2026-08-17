@@ -13,7 +13,7 @@ import { EmailVerifiedGuard } from '@common/guards/email-verified.guard';
 import { RequirePermissions } from '@common/decorators/require-permissions.decorator';
 import { CreateClubDto, UpdateClubDto } from './club.dto';
 import { CurrentUser } from '@common/decorators/current-user';
-import { TPayload } from '@core/iam/auth/auth.types';
+import { TPayload } from '@iam/auth/auth.types';
 import { Request } from 'express';
 
 @Controller('club')

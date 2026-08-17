@@ -5,7 +5,7 @@ import { AuditLogsService } from '@infrastructure/audit-logs/audit-logs.service'
 import { ConfigService } from '@nestjs/config';
 import { ENAuditCategory, ENInvitationStatus, ENMembershipStatus, ENMembershipType } from '@prisma/client';
 import { AcceptInvitationDto, InviteUserDto } from '../membership/membership.dto';
-import { TCurrentUser } from '@core/iam/auth/auth.types';
+import { TCurrentUser } from '@iam/auth/auth.types';
 import { ResourceNotFoundException } from '@common/exceptions/resource-not-found';
 import { generateApplicationToken, computeTokenHash } from '@common/utils/token-hash.util';
 

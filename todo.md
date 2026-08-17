@@ -144,3 +144,47 @@
 - [ ] Error response format — ensure all exceptions go through the global `HttpExceptionFilter` and return a consistent shape
 - [ ] Input validation — audit all DTOs to confirm `class-validator` decorators are thorough and `ValidationPipe` is applied globally
 - [ ] `description` field on `AuditLog` — currently optional in the service but required in the schema; align them
+
+
+[RoutesResolver] AuthController {/api/auth}: +6ms
+[RouterExplorer] Mapped {/api/auth/signup, POST} route +5ms
+[RouterExplorer] Mapped {/api/auth/signin, POST} route +1ms
+[RouterExplorer] Mapped {/api/auth/signout, POST} route +1ms
+[RouterExplorer] Mapped {/api/auth/me, GET} route +0ms
+[RouterExplorer] Mapped {/api/auth/email/send-verify, POST} route +1ms
+[RouterExplorer] Mapped {/api/auth/email/verify, PUT} route +0ms
+[RouterExplorer] Mapped {/api/auth/password/forgot, POST} route +1ms
+[RouterExplorer] Mapped {/api/auth/password/reset, PUT} route +0ms
+[RoutesResolver] AuditLogsController {/api/audit-logs}: +0ms
+[RoutesResolver] MembershipController {/api/membership}: +0ms
+[RouterExplorer] Mapped {/api/membership/my, GET} route +1ms
+[RouterExplorer] Mapped {/api/membership/create, POST} route +0ms
+[RouterExplorer] Mapped {/api/membership/suspend/:membershipId, PUT} route +1ms
+[RoutesResolver] InvitationController {/api/invitation}: +1ms
+[RouterExplorer] Mapped {/api/invitation/accept, POST} route +1ms
+[RoutesResolver] PermissionController {/api/permission}: +0ms
+[RouterExplorer] Mapped {/api/permission/my, GET} route +1ms
+[RouterExplorer] Mapped {/api/permission/grant/:membershipId, POST} route +0ms
+[RouterExplorer] Mapped {/api/permission/sync/:membershipId, POST} route +0ms
+[RouterExplorer] Mapped {/api/permission/revoke/:membershipId, POST} route +1ms
+[RoutesResolver] RoleController {/api/role}: +0ms
+[RouterExplorer] Mapped {/api/role/my, GET} route +0ms
+[RouterExplorer] Mapped {/api/role/club, GET} route +1ms
+[RouterExplorer] Mapped {/api/role/:role_id, GET} route +0ms
+[RouterExplorer] Mapped {/api/role, POST} route +0ms
+[RouterExplorer] Mapped {/api/role/:role_id, DELETE} route +1ms
+[RouterExplorer] Mapped {/api/role/:role_id, PATCH} route +0ms
+[RouterExplorer] Mapped {/api/role/assign/:membership_id, POST} route +1ms
+[RouterExplorer] Mapped {/api/role/revoke/:membership_id, POST} route +0ms
+[RoutesResolver] ClubController {/api/club}: +0ms
+[RouterExplorer] Mapped {/api/club/my, GET} route +1ms
+[RouterExplorer] Mapped {/api/club/register, POST} route +0ms
+[RouterExplorer] Mapped {/api/club/update, PUT} route +0ms
+[RouterExplorer] Mapped {/api/club/workspace, GET} route +0ms
+[RoutesResolver] ProfileController {/api/profile}: +1ms
+[RoutesResolver] PlayerController {/api/player}: +0ms
+[RoutesResolver] TeamController {/api/team}: +1ms
+[RouterExplorer] Mapped {/api/team, GET} route +0ms
+[RouterExplorer] Mapped {/api/team/:team_id, GET} route +1ms
+[RouterExplorer] Mapped {/api/team, POST} route +0ms
+[RouterExplorer] Mapped {/api/team/:team_id, PATCH} route +1ms

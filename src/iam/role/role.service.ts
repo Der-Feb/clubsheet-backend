@@ -6,7 +6,7 @@ import { parsePrismaError } from '@common/utils/error-handler';
 import { ENAuditCategory, Prisma } from '@prisma/client';
 import { ResourceNotFoundException } from '@common/exceptions/resource-not-found';
 import { CreateRoleDto, UpdateRoleDto } from './role.dto';
-import { UpdateClubDto } from '@core/club/club/club.dto';
+import { UpdateClubDto } from '@clubs/club/club.dto';
 
 @Injectable()
 export class RoleService {

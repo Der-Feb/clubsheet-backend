@@ -9,5 +9,7 @@ export class ProfileService {
     private readonly auditLogsService: AuditLogsService,
   ) {}
 
-  
+  public async createProfile() {}
+
+  public async createPlayerProfile() {}
 }
