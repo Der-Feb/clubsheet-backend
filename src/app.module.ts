@@ -14,6 +14,7 @@ import { TasksService } from './tasks/tasks.service';
 import { PermissionModule } from './permission/permission.module';
 import { RoleModule } from './role/role.module';
 import { ProfileModule } from './profile/profile.module';
+import { FeatureModule } from './feature/feature.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { ProfileModule } from './profile/profile.module';
     PermissionModule,
     RoleModule,
     ProfileModule,
+    FeatureModule,
   ],
   providers: [TasksService],
   controllers: [InvitationController],

@@ -1,15 +1,16 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { PassportModule } from "@nestjs/passport"
+import { PassportModule } from '@nestjs/passport';
 import { LocalStrategy } from './strategy/local.strategy';
 import { JwtStrategy } from './strategy/jwt.strategy';
 import { AuditLogsModule } from '../audit-logs/audit-logs.module';
 import { UserTokenModule } from '../user-token/user-token.module';
 import { EmailVerifiedGuard } from '../common/guards/email-verified.guard';
 
+@Global()
 @Module({
   imports: [
     JwtModule.registerAsync({
@@ -19,19 +20,14 @@ import { EmailVerifiedGuard } from '../common/guards/email-verified.guard';
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
         signOptions: { expiresIn: '1d' },
-      })
+      }),
     }),
     PassportModule,
     AuditLogsModule,
-    UserTokenModule
+    UserTokenModule,
   ],
   controllers: [AuthController],
-  providers: [
-    AuthService,
-    LocalStrategy,
-    JwtStrategy,
-    EmailVerifiedGuard
-  ],
-  exports: [AuthService]
+  providers: [AuthService, LocalStrategy, JwtStrategy, EmailVerifiedGuard],
+  exports: [AuthService],
 })
 export class AuthModule {}
