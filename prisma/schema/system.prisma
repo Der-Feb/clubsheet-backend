@@ -3,6 +3,7 @@ enum ENAuditCategory {
   AUTH
   IAM
   CLUB
+  TEAM
   PLAYER
   TRAINING
   MATCH

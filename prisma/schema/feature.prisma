@@ -12,7 +12,7 @@ enum ENTrainingType {
 }
 
 model Training {
-  id String @id @default(cuid(2))
+  id String @id @default(cuid())
 
   clubId String @map("club_id")
   club   Club   @relation(fields: [clubId], references: [id])
@@ -41,7 +41,7 @@ model Training {
 }
 
 model Player {
-  id String @id @default(cuid(2))
+  id String @id @default(cuid())
 
   membershipId String     @map("membership_id")
   membership   Membership @relation(fields: [membershipId], references: [id])
@@ -58,7 +58,7 @@ model Player {
 }
 
 model Team {
-  id String @id @default(cuid(2))
+  id String @id @default(cuid())
 
   clubId String @map("club_id")
   club   Club   @relation(fields: [clubId], references: [id])

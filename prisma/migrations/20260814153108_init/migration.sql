@@ -14,7 +14,7 @@ CREATE TYPE "ENMembershipStatus" AS ENUM ('PENDING', 'ACTIVE', 'SUSPENDED', 'END
 CREATE TYPE "ENMembershipType" AS ENUM ('OWNER', 'STAFF', 'ATHLETE', 'GUARDIAN', 'BOARD');
 
 -- CreateEnum
-CREATE TYPE "ENPermissionModule" AS ENUM ('ACCESS', 'TRAINING', 'PLAYER', 'MEDICAL', 'FINANCE', 'MATCH');
+CREATE TYPE "ENPermissionFeature" AS ENUM ('ACCESS', 'TRAINING', 'PLAYER', 'MEDICAL', 'FINANCE', 'MATCH');
 
 -- CreateEnum
 CREATE TYPE "ENPermissionAction" AS ENUM ('CREATE', 'READ', 'WRITE', 'DELETE', 'APPROVE', 'EXPORT', 'ASSIGN');
@@ -106,7 +106,7 @@ CREATE TABLE "permissions" (
     "code" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT NOT NULL,
-    "module" "ENPermissionModule" NOT NULL,
+    "module" "ENPermissionFeature" NOT NULL,
     "action" "ENPermissionAction" NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,

@@ -15,6 +15,7 @@ import { PermissionModule } from './permission/permission.module';
 import { RoleModule } from './role/role.module';
 import { ProfileModule } from './profile/profile.module';
 import { FeatureModule } from './feature/feature.module';
+import { PlayerModule } from './player/player.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { FeatureModule } from './feature/feature.module';
     RoleModule,
     ProfileModule,
     FeatureModule,
+    PlayerModule,
   ],
   providers: [TasksService],
   controllers: [InvitationController],

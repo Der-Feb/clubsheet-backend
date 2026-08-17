@@ -47,6 +47,54 @@ ALTER INDEX "MembershipType_membershipId_type_key" RENAME TO "membership_types_m
 ALTER INDEX "Profile_person_id_key" RENAME TO "profiles_person_id_key";
 
 -- ============================================================
+-- 3b. Rename PRIMARY KEY constraints (Postgres does NOT auto-rename PK on table rename)
+-- ============================================================
+
+-- audit_logs PK
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'AuditLog_pkey' AND table_name = 'audit_logs'
+    ) THEN
+        ALTER TABLE "audit_logs" RENAME CONSTRAINT "AuditLog_pkey" TO "audit_logs_pkey";
+    END IF;
+END $$;
+
+-- notifications PK
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'Notification_pkey' AND table_name = 'notifications'
+    ) THEN
+        ALTER TABLE "notifications" RENAME CONSTRAINT "Notification_pkey" TO "notifications_pkey";
+    END IF;
+END $$;
+
+-- profiles PK
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'Profile_pkey' AND table_name = 'profiles'
+    ) THEN
+        ALTER TABLE "profiles" RENAME CONSTRAINT "Profile_pkey" TO "profiles_pkey";
+    END IF;
+END $$;
+
+-- teams PK
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'Team_pkey' AND table_name = 'teams'
+    ) THEN
+        ALTER TABLE "teams" RENAME CONSTRAINT "Team_pkey" TO "teams_pkey";
+    END IF;
+END $$;
+
+-- ============================================================
 -- 4. Rename foreign key constraints for consistency
 -- ============================================================
 

@@ -38,7 +38,7 @@
 - [ ] Sync utility — method to copy all permissions from a role into a membership's direct permissions (noted in old todo)
   - Useful when a role is customized post-assignment and changes need to propagate
 - [ ] Seed remaining system roles — `COACH`, `STAFF`, `ATHLETE` with appropriate permission sets
-- [ ] Seed core permissions for all permission codes currently declared in `ENPermissionModule`
+- [ ] Seed core permissions for all permission codes currently declared in `ENPermissionFeature`
 
 ---
 

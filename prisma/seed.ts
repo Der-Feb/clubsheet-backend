@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { ENPermissionAction, ENPermissionModule, ENPermissionScope, PrismaClient } from '@prisma/client';
+import { ENPermissionAction, ENPermissionFeature, ENPermissionScope, PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 
@@ -10,26 +10,31 @@ const prisma = new PrismaClient({ adapter });
 
 const permissionsData = [
   // CLUB MODULE
-  { code: 'CLUB_READ', name: 'Read Club Information', module: ENPermissionModule.ACCESS, action: ENPermissionAction.READ, description: 'View club details' },
-  { code: 'CLUB_WRITE', name: 'Write Club Information', module: ENPermissionModule.ACCESS, action: ENPermissionAction.WRITE, description: 'Write club details' },
-  { code: 'CLUB_DELETE', name: 'Delete Club', module: ENPermissionModule.ACCESS, action: ENPermissionAction.DELETE, description: 'Delete or archive club' },
+  { code: 'CLUB_READ', name: 'Read Club Information', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.READ, description: 'View club details' },
+  { code: 'CLUB_WRITE', name: 'Write Club Information', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.WRITE, description: 'Write club details' },
+  { code: 'CLUB_DELETE', name: 'Delete Club', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.DELETE, description: 'Delete or archive club' },
 
   // ACCESS & ROLES MODULE
-  { code: 'PERMISSION_ASSIGN', name: 'Assign Permission', module: ENPermissionModule.ACCESS, action: ENPermissionAction.ASSIGN, description: 'Assign permissions to members' },
-  { code: 'PERMISSION_READ', name: 'Read Member Information', module: ENPermissionModule.ACCESS, action: ENPermissionAction.READ, description: 'View permissions details' },
-  { code: 'PERMISSION_REVOKE', name: 'Revoke Permission', module: ENPermissionModule.ACCESS, action: ENPermissionAction.DELETE, description: 'Revoke permissions to members' },
+  { code: 'PERMISSION_ASSIGN', name: 'Assign Permission', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.ASSIGN, description: 'Assign permissions to members' },
+  { code: 'PERMISSION_READ', name: 'Read Member Information', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.READ, description: 'View permissions details' },
+  { code: 'PERMISSION_REVOKE', name: 'Revoke Permission', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.DELETE, description: 'Revoke permissions to members' },
   
-  { code: 'ROLE_ASSIGN', name: 'Assign Role', module: ENPermissionModule.ACCESS, action: ENPermissionAction.ASSIGN, description: 'Assign roles to members' },
-  { code: 'ROLE_READ', name: 'Read Role Information', module: ENPermissionModule.ACCESS, action: ENPermissionAction.READ, description: 'View roles details' },
-  { code: 'ROLE_REVOKE', name: 'Revoke Roles', module: ENPermissionModule.ACCESS, action: ENPermissionAction.DELETE, description: 'Revoke roles to members' },
-  { code: 'ROLE_DELETE', name: 'Delete Role', module: ENPermissionModule.ACCESS, action: ENPermissionAction.DELETE, description: 'Delete or archive non system role' },
+  { code: 'ROLE_ASSIGN', name: 'Assign Role', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.ASSIGN, description: 'Assign roles to members' },
+  { code: 'ROLE_READ', name: 'Read Role Information', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.READ, description: 'View roles details' },
+  { code: 'ROLE_REVOKE', name: 'Revoke Roles', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.DELETE, description: 'Revoke roles to members' },
+  { code: 'ROLE_DELETE', name: 'Delete Role', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.DELETE, description: 'Delete or archive non system role' },
 
-  { code: 'PLAYER_READ', name: 'Read Player Information', module: ENPermissionModule.ACCESS, action: ENPermissionAction.READ, description: 'View player details' },
-  { code: 'PLAYER_WRITE', name: 'Write Player Information', module: ENPermissionModule.ACCESS, action: ENPermissionAction.WRITE, description: 'Write player details' },
+  { code: 'PLAYER_READ', name: 'Read Player Information', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.READ, description: 'View player details' },
+  { code: 'PLAYER_WRITE', name: 'Write Player Information', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.WRITE, description: 'Write player details' },
+  { code: 'PLAYER_ASSIGN', name: 'Move player to team', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.ASSIGN, description: 'Move player to team' },
+  { code: 'PLAYER_UNASSIGN', name: 'Remove player from team', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.DELETE, description: 'Remove player from team' },
 
-  { code: 'MEMBERSHIP_READ', name: 'Read Membership Information', module: ENPermissionModule.ACCESS, action: ENPermissionAction.READ, description: 'View membership details' },
-  { code: 'MEMBERSHIP_WRITE', name: 'Write Membership Information', module: ENPermissionModule.ACCESS, action: ENPermissionAction.WRITE, description: 'Write membership details' },
-  { code: 'MEMBERSHIP_SUSPEND', name: 'Suspend Membership', module: ENPermissionModule.ACCESS, action: ENPermissionAction.DELETE, description: 'Suspend membership' },
+  { code: 'MEMBERSHIP_READ', name: 'Read Membership Information', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.READ, description: 'View membership details' },
+  { code: 'MEMBERSHIP_WRITE', name: 'Write Membership Information', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.WRITE, description: 'Write membership details' },
+  { code: 'MEMBERSHIP_SUSPEND', name: 'Suspend Membership', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.DELETE, description: 'Suspend membership' },
+
+  { code: 'TEAM_READ', name: 'Read Team Information', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.READ, description: 'View team details' },
+  { code: 'TEAM_WRITE', name: 'Write Team Information', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.WRITE, description: 'Write team details' },
 ];
 
 const roleData = [
