@@ -4,8 +4,11 @@ model Profile {
   personId String @unique @map("person_id")
   person   Person @relation(fields: [personId], references: [id])
 
+  phoneNumber String?
+
   profilePic    String?        @map("profile_pic")
   playerProfile PlayerProfile?
+  coachProfile CoachProfile?
 
   sendEmailNotification Boolean @default(false) @map("send_email_notification")
 
@@ -45,6 +48,56 @@ model PlayerProfile {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("player_profiles")
+}
+
+enum ENCoachPosition {
+  HEAD_COACH
+  ASSISTANT_COACH
+  GOALKEEPER_COACH
+  FITNESS_COACH
+  TECHNICAL_COACH
+  ANALYST
+}
+
+enum ENCoachResponsibility {
+  TRAINING
+  TACTICS
+  PLAYER_DEVELOPMENT
+  MATCH_ANALYSIS
+  FITNESS
+  GOALKEEPING
+  SCOUTING
+}
+
+model CoachAssignment {
+  id String @id @default(cuid())
+
+  membershipId String     @map("membership_id")
+  membership   Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  teamId String @map("team_id")
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  responsabilities ENCoachResponsibility[] @default([])
+  position         ENCoachPosition
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([membershipId, teamId])
+  @@map("coach_assignments")
+}
+
+model CoachProfile {
+  id String @id @default(cuid())
+
+  specialization  String?
+  license         String?
+
+  profileId String  @unique @map("profile_id")
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("coach_profiles")
 }
 
 // other profiles

@@ -7,7 +7,7 @@ import { Request } from 'express';
 import { RequirePermissions } from '@common/decorators/require-permissions.decorator';
 import { CreateMembershipDto } from './membership.dto';
 import { CurrentMembership, CurrentUser } from '@common/decorators/current-user';
-import { IsCuid2 } from '@common/decorators/is-cuid.decorator';
+import { IsCuid2 } from '@common/validators/is-cuid.validator';
 import { TUserJWTPayload } from '../auth/strategy/jwt.strategy';
 import { ParseCuidPipe } from '@common/pipes/cuid-pipe';
 

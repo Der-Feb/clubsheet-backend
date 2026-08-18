@@ -1,4 +1,4 @@
-import { IsCuid2 } from "@common/decorators/is-cuid.decorator";
+import { IsCuid2 } from "@common/validators/is-cuid.validator";
 import { ENMembershipType } from "@prisma/client";
 import { Transform } from "class-transformer";
 import { IsEmail, IsEnum, IsNotEmpty, IsString, MinLength } from "class-validator";

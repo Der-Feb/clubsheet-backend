@@ -3,13 +3,13 @@ import { isCuid } from '@paralleldrive/cuid2';
 
 @ValidatorConstraint({ name: "isCuid", async: false })
 export class IsCuid2Constraint implements ValidatorConstraintInterface {
-  validate(value: any, args: ValidationArguments) {
+  public validate(value: any, args: ValidationArguments) {
     if (typeof value !== "string" || !isCuid(value)) return false;
 
     return true;
   }
 
-  defaultMessage(args?: ValidationArguments): string {
+  public defaultMessage(args?: ValidationArguments): string {
     return `${args?.property} is not a valid CUID`;
   }
 }

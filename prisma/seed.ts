@@ -33,6 +33,11 @@ const permissionsData = [
   { code: 'MEMBERSHIP_WRITE', name: 'Write Membership Information', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.WRITE, description: 'Write membership details' },
   { code: 'MEMBERSHIP_SUSPEND', name: 'Suspend Membership', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.DELETE, description: 'Suspend membership' },
 
+  // PROFILE MODULE
+  { code: 'PROFILE_READ', name: 'Read Profile Information', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.READ, description: 'View profile details' },
+  { code: 'PROFILE_WRITE', name: 'Write Profile Information', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.WRITE, description: 'Write profile details' },
+
+  // TEAM MODULE
   { code: 'TEAM_READ', name: 'Read Team Information', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.READ, description: 'View team details' },
   { code: 'TEAM_WRITE', name: 'Write Team Information', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.WRITE, description: 'Write team details' },
 ];

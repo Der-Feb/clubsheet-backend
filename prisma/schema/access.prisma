@@ -114,7 +114,8 @@ model Membership {
   createdClubs    Club[]       @relation("ClubCreator")
   sentInvitations Invitation[] @relation("MembershipSentInvitations")
 
-  player Player[]
+  player           Player[]
+  coachAssignments CoachAssignment[]
 
   @@index([personId])
   @@index([clubId])
