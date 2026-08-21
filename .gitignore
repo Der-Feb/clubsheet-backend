@@ -83,3 +83,6 @@ src/@generated/
 ## testing payloads
 test/
 payloads/
+
+## scripts
+*.sh

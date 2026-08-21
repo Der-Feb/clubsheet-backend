@@ -8,9 +8,10 @@ import { GrantPermissionDto, RevokePermissionDto } from './permission.dto';
 import { CurrentMembership, CurrentUser } from '@common/decorators/current-user';
 import { TUserJWTPayload } from '../auth/strategy/jwt.strategy';
 import { RequirePermissions } from '@common/decorators/require-permissions.decorator';
+import { PermissionsGuard } from '@common/guards/permissions.guard';
 
 @Controller('permission')
-@UseGuards(PassportJwtGuard, EmailVerifiedGuard, ActiveMembershipGuard)
+@UseGuards(PassportJwtGuard, EmailVerifiedGuard, ActiveMembershipGuard, PermissionsGuard)
 export class PermissionController {
   constructor(private readonly permissionService: PermissionService) {}
 

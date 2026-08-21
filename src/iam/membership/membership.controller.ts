@@ -10,9 +10,10 @@ import { CurrentMembership, CurrentUser } from '@common/decorators/current-user'
 import { IsCuid2 } from '@common/validators/is-cuid.validator';
 import { TUserJWTPayload } from '../auth/strategy/jwt.strategy';
 import { ParseCuidPipe } from '@common/pipes/cuid-pipe';
+import { PermissionsGuard } from '@common/guards/permissions.guard';
 
 @Controller('membership')
-@UseGuards(PassportJwtGuard, EmailVerifiedGuard, ActiveMembershipGuard)
+@UseGuards(PassportJwtGuard, EmailVerifiedGuard, ActiveMembershipGuard, PermissionsGuard)
 export class MembershipController {
   constructor(private readonly membershipService: MembershipService) {}
 

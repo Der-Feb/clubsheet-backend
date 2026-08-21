@@ -7,9 +7,10 @@ import { CurrentMembership } from '@common/decorators/current-user';
 import { ParseCuidPipe } from '@common/pipes/cuid-pipe';
 import { RequirePermissions } from '@common/decorators/require-permissions.decorator';
 import { CreateCoachAndProfileDto, CreatePlayerAndProfileDto, CreateProfileDto } from './profile.dto';
+import { PermissionsGuard } from '@common/guards/permissions.guard';
 
 @Controller('profile')
-@UseGuards(PassportJwtGuard, EmailVerifiedGuard, ActiveMembershipGuard)
+@UseGuards(PassportJwtGuard, EmailVerifiedGuard, ActiveMembershipGuard, PermissionsGuard)
 export class ProfileController {
   constructor(
     private readonly profileService: ProfileService,

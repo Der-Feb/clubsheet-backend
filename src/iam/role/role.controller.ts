@@ -9,9 +9,10 @@ import { TUserJWTPayload } from '../auth/strategy/jwt.strategy';
 import { PassportJwtGuard } from '@common/guards/passport.guard';
 import { EmailVerifiedGuard } from '@common/guards/email-verified.guard';
 import { RequirePermissions } from '@common/decorators/require-permissions.decorator';
+import { PermissionsGuard } from '@common/guards/permissions.guard';
 
 @Controller('role')
-@UseGuards(PassportJwtGuard, EmailVerifiedGuard, ActiveMembershipGuard)
+@UseGuards(PassportJwtGuard, EmailVerifiedGuard, ActiveMembershipGuard, PermissionsGuard)
 export class RoleController {
   constructor(private roleService: RoleService) {}
 

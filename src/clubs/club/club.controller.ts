@@ -27,7 +27,6 @@ export class ClubController {
   }
 
   @Post('register')
-  @RequirePermissions(true, ['CLUB_WRITE'])
   public async createClub(
     @Body() createClubDto: CreateClubDto,
     @CurrentUser() currentUser: any,

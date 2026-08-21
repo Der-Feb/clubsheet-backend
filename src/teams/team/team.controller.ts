@@ -8,9 +8,10 @@ import { RequirePermissions } from '@common/decorators/require-permissions.decor
 import { ParseCuidPipe } from '@common/pipes/cuid-pipe';
 import { CreateTeamDto } from './team.dto';
 import { TUserJWTPayload } from '@iam/auth/strategy/jwt.strategy';
+import { PermissionsGuard } from '@common/guards/permissions.guard';
 
 @Controller('team')
-@UseGuards(PassportJwtGuard, EmailVerifiedGuard, ActiveMembershipGuard)
+@UseGuards(PassportJwtGuard, EmailVerifiedGuard, ActiveMembershipGuard, PermissionsGuard)
 export class TeamController {
   constructor(private readonly teamService: TeamService) {}
 
