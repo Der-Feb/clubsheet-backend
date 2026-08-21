@@ -96,20 +96,43 @@ export class AuthService {
     }
 
     public async validateCredentials(loginDto: LoginDto) {
+        // Validate DTO structure first to ensure we have required fields
+        if (!loginDto || !loginDto.email || !loginDto.password) {
+            throw new UnauthorizedException('Email and password are required');
+        }
+
+        // Trim whitespace from inputs
+        const email = loginDto.email.trim().toLowerCase();
+        const password = loginDto.password.trim();
+
         const user = await this.prisma.user.findUnique({
-            where: { email: loginDto.email },
+            where: { email },
             include: { person: true },
         });
 
+        
         if (!user) throw new UnauthorizedException('Invalid credentials');
-
-        const validPassword = await argon2.verify(
-            user.passwordHash, loginDto.password,
-        );
-
-        if (!validPassword) throw new UnauthorizedException('Invalid credentials');
+        
+        try {
+            const validPassword = await argon2.verify(
+                user.passwordHash, 
+                password
+            );
+            
+            if (!validPassword) {
+                throw new UnauthorizedException('Invalid credentials');
+            }
+        } catch (error) {
+            // If it's already an UnauthorizedException, rethrow it
+            if (error instanceof UnauthorizedException) {
+                throw error;
+            }
+            // For any other error from argon2, treat as invalid credentials
+            throw new UnauthorizedException('Invalid credentials');
+        }
 
         return this.returnSanitizedUserData(user);
+
     }
 
     private async updateLastLogin(user: User) {
