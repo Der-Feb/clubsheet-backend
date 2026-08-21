@@ -76,3 +76,10 @@ http/
 
 scripts/
 prompts/
+
+## generated graphql-nestjs-prisma types
+src/@generated/
+
+## testing payloads
+test/
+payloads/

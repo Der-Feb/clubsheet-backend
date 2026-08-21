@@ -15,12 +15,15 @@ import { RoleModule } from './iam/role/role.module';
 import { ProfileModule } from './iam/profile/profile.module';
 import { TeamModule } from './teams/team/team.module';
 import { PlayerModule } from './players/player/player.module';
+import { GraphqlModule } from './graphql/graphql.module';
+import { AppResolver } from './app.resolver';
 
 @Module({
   imports: [
     PrismaModule,
     ConfigModule.forRoot({ isGlobal: true }),
     ScheduleModule.forRoot(),
+    GraphqlModule,
     // IAM modules
     AuthModule,
     UserTokenModule,
@@ -37,6 +40,6 @@ import { PlayerModule } from './players/player/player.module';
     AuditLogsModule,
     CommunicationModule,
   ],
-  providers: [TasksService],
+  providers: [TasksService, AppResolver],
 })
 export class AppModule {}
