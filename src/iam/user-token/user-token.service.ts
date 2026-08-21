@@ -158,10 +158,11 @@ export class UserTokenService {
      * @param to 
      * @param verifyToken 
      */
-    public async sendVerifyEmail(userId: string) {
-        const user = await this.userExists(userId);
+    public async sendVerifyEmail(email: string) {
+        const user = await this.prisma.user.findUnique({ where: { email }, include: { person: true } });
         if(!user) throw new ResourceNotFoundException("User not found", "User");
         if(user.isEmailVerified) throw new BadRequestException("User email is already verified");
+        const userId = user.id;
         
         // rate limiter of tokens the user can send
         const tokenCountInWindow = await this.prisma.userToken.findMany({
@@ -227,11 +228,12 @@ export class UserTokenService {
         }
     }
     
-    public async verifyEmail(userId: string, token: string) {
-        const user = await this.userExists(userId);
+    public async verifyEmail(email: string, token: string) {
+        const user = await this.prisma.user.findUnique({ where: { email }, include: { person: true }});
         if(!user) throw new ResourceNotFoundException("User not found", "User");
         if(user.isEmailVerified) throw new BadRequestException("User email is already verified");
-
+        
+        const userId = user.id;
         const now = new Date();
 
         // Compute HMAC digest and look up directly — no iteration needed

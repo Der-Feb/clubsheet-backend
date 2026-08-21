@@ -145,6 +145,10 @@
 - [ ] Input validation — audit all DTOs to confirm `class-validator` decorators are thorough and `ValidationPipe` is applied globally
 - [ ] `description` field on `AuditLog` — currently optional in the service but required in the schema; align them
 
+## TODO
+- [ ] On club, i removed creating the club with permissions, to mean that the user will have other series of steps to actually verify the validity of the club
+- [ ] Make the club invitation permissions 
+
 
 [RoutesResolver] AuthController {/api/auth}: +6ms
 [RouterExplorer] Mapped {/api/auth/signup, POST} route +5ms

@@ -30,9 +30,11 @@ export class TeamService {
       category: ENAuditCategory.TEAM,
       action: 'create',
       entityType: 'Team',
-      metadata: { team },
+      metadata: { teamId: team.id, teamName: team.name, clubId: club.id },
       createdBy: user_id,
     });
+
+    return team;
   }
 
   public async getTeamList(adminMembership: TActiveMembershipPayload) {
@@ -67,8 +69,10 @@ export class TeamService {
       category: ENAuditCategory.TEAM,
       action: 'update',
       entityType: 'Team',
-      metadata: { team },
+      metadata: { teamId: team.id, teamName: team.name, clubId: club.id },
       createdBy: user_id,
     });
+
+    return team;
   }
 }
