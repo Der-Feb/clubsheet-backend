@@ -12,9 +12,11 @@ import { PassportJwtGuard } from '@common/guards/passport.guard';
 import { EmailVerifiedGuard } from '@common/guards/email-verified.guard';
 import { RequirePermissions } from '@common/decorators/require-permissions.decorator';
 import { CreateClubDto, UpdateClubDto } from './club.dto';
-import { CurrentUser } from '@common/decorators/current-user';
+import { CurrentMembership, CurrentUser } from '@common/decorators/current-user';
 import { TPayload } from '@iam/auth/auth.types';
 import { Request } from 'express';
+import { ActiveMembershipGuard, TActiveMembershipPayload } from '@common/guards/active-membership.guard';
+import { TUserJWTPayload } from '@iam/auth/strategy/jwt.strategy';
 
 @Controller('club')
 @UseGuards(PassportJwtGuard, EmailVerifiedGuard)
@@ -22,6 +24,7 @@ export class ClubController {
   constructor(private clubService: ClubService) {}
 
   @Get('my')
+  @UseGuards(ActiveMembershipGuard)
   async getMyClubs(@Req() req: Request) {
     return req.activeMembership?.club;
   }
@@ -38,18 +41,16 @@ export class ClubController {
   }
 
   @Put('update')
+  @UseGuards(ActiveMembershipGuard)
   @RequirePermissions(true, ['CLUB_WRITE'])
   public async updateClub(
     @Body() updateClubDto: UpdateClubDto,
-    @CurrentUser() currentUser: any,
+    @CurrentMembership() currentMembership: TActiveMembershipPayload
   ) {
     return await this.clubService.updateClub(
       updateClubDto,
-      currentUser.user_id,
-      currentUser.person_id,
+      currentMembership
     );
   }
 
-  @Get('/workspace')
-  public async() {}
 }

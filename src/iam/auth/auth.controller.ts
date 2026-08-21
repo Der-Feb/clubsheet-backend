@@ -8,7 +8,7 @@ import { TPayload, TUserData } from './auth.types';
 import { ENAuditCategory } from '@prisma/client';
 import { AuditLogsService } from '@infrastructure/audit-logs/audit-logs.service';
 import { UserTokenService } from '../user-token/user-token.service';
-import { ForgotPasswordDto, ResetPasswordDto, VerifyEmailDto } from '../user-token/user-token.dto';
+import { ForgotPasswordDto, ResetPasswordDto, SendVerifyEmailDto, VerifyEmailDto } from '../user-token/user-token.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -99,21 +99,18 @@ export class AuthController {
 
     @HttpCode(HttpStatus.OK)
     @Post('email/send-verify')
-    @UseGuards(PassportJwtGuard)
     public async sendVerifyEmail(
-        @CurrentUser() user: any
+        @Body() data: SendVerifyEmailDto
     ) {
-        return await this.userTokenService.sendVerifyEmail(user.user_id);
+        return await this.userTokenService.sendVerifyEmail(data.email);
     }
 
     @HttpCode(HttpStatus.OK)
     @Put('email/verify')
-    @UseGuards(PassportJwtGuard)
     public async verifyEMail(
-        @CurrentUser() user: any,
         @Body() data: VerifyEmailDto,
     ) {
-        return await this.userTokenService.verifyEmail(user.user_id, data.token);
+        return await this.userTokenService.verifyEmail(data.email, data.token);
     }
 
     @Post('password/forgot')

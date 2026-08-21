@@ -5,6 +5,7 @@ import { CreateClubDto, UpdateClubDto } from './club.dto';
 import { ResourceNotFoundException } from '@common/exceptions/resource-not-found';
 import { ENAuditCategory, ENClubStatus, ENMembershipStatus, ENMembershipType } from '@prisma/client';
 import { parsePrismaError } from '@common/utils/error-handler';
+import { TActiveMembershipPayload } from '@common/guards/active-membership.guard';
 
 @Injectable()
 export class ClubService {
@@ -62,18 +63,11 @@ export class ClubService {
             const user = await this.prisma.user.findUnique({
                 where: { id: userId },
                 include: {
-                    person: {
-                        include: { memberships: true }
-                    }
+                    person: true
                 }
             });
     
             if (!user) throw new ResourceNotFoundException("User not found", "user");
-    
-            // check if the user has other membership which are still active
-            const hasOtherOpenMembership = user.person.memberships.some(m => m.status === ENClubStatus.ACTIVE);
-            if (hasOtherOpenMembership) 
-                throw new ConflictException("User already has other active membership");
     
             // creating the club and new membership of the own
             return await this.prisma.$transaction(async(tx) => {
@@ -100,12 +94,43 @@ export class ClubService {
                         personId: user.person.id,
                         types: {
                             create: uniqueTypes.map(type => ({ type: type }))
-                        }
+                        },
+                        status: ENMembershipStatus.ACTIVE
                     },
                     include: {
                         types: true
                     }
                 });
+
+                // Get the ADMIN role
+                const adminRole = await tx.role.findUnique({
+                    where: { code: 'ADMIN' }
+                });
+
+                // Assign ADMIN role to the club creator
+                if (adminRole) {
+                    await tx.membershipRole.create({
+                        data: {
+                            membershipId: ownerMembership.id,
+                            roleId: adminRole.id
+                        }
+                    });
+
+                    // Sync all permissions from ADMIN role to the membership
+                    const adminPermissions = await tx.rolePermission.findMany({
+                        where: { roleId: adminRole.id }
+                    });
+
+                    if (adminPermissions.length > 0) {
+                        const result = await tx.membershipPermission.createMany({
+                            data: adminPermissions.map(rp => ({
+                                membershipId: ownerMembership.id,
+                                permissionId: rp.permissionId,
+                                scope: rp.scope
+                            }))
+                        });
+                    }
+                }
     
                 const finalizedClub = await tx.club.update({
                     where: { id: club.id },
@@ -118,26 +143,13 @@ export class ClubService {
                 }
             });
         } catch (error) {
-            console.log(error);
+            console.error('Club creation error:', error);
+            throw error;
         }
     }
 
-    public async updateClub(data: UpdateClubDto, user_id: string, person_id: string) {
+    public async updateClub(data: UpdateClubDto, membership: TActiveMembershipPayload) {
         // 1. Find the active membership for this user/person and include the club
-        const membership = await this.prisma.membership.findFirst({
-            where: {
-                status: ENMembershipStatus.ACTIVE,
-                person: {
-                    id: person_id,
-                    user: { id: user_id }
-                }
-            },
-            include: {
-                club: true,
-                types: true,
-            }
-        });
-
         if (!membership || !membership.club)
             throw new ResourceNotFoundException("No club found for this user", "club");
 
@@ -153,12 +165,12 @@ export class ClubService {
             entityType: "Club",
             description: "Updating the club details",
             metadata: { 
-                userId: user_id, 
-                personId: person_id, 
+                userId: membership.person.user?.id, 
+                personId: membership.personId, 
                 membershipId: membership.id,
                 clubId: club.id 
             },
-            createdBy: user_id
+            createdBy: membership.person.user?.id
         });
 
         return {

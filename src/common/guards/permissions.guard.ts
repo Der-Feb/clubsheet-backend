@@ -20,13 +20,14 @@ export class PermissionsGuard implements CanActivate {
     const req = this.getRequest(context);
     const activeMembership = req.activeMembership;
 
+    // If no active membership but permissions are required, deny access
     if (!activeMembership) {
-      throw new ForbiddenException('Active membership context missing');
+      throw new ForbiddenException('Active membership required to perform this action');
     }
 
     // Extract all hydrated permission codes directly from activeMembership
     const userPermissions = new Set<string>(
-      activeMembership.permissions?.map((mp: any) => mp.permission?.code).filter(Boolean)
+      activeMembership.permissions?.map((mp: any) => mp.permission?.code).filter(Boolean) || []
     );
 
     // Evaluate strict (ALL) vs non-strict (ANY)
@@ -35,7 +36,8 @@ export class PermissionsGuard implements CanActivate {
       : requiredPermissions.some((code) => userPermissions.has(code));
 
     if (!hasPermission) {
-      throw new ForbiddenException('You do not have sufficient permissions to perform this action');
+      const missingPerms = requiredPermissions.filter((code) => !userPermissions.has(code)).join(', ');
+      throw new ForbiddenException(`Missing required permissions: ${missingPerms}`);
     }
 
     return true;

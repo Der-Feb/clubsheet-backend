@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, UnauthorizedException } from "@nestjs/common";
+import { CanActivate, ExecutionContext, Injectable, InternalServerErrorException, UnauthorizedException } from "@nestjs/common";
 import { PrismaService } from "@infrastructure/prisma/prisma.service";
 import { ENMembershipStatus, Prisma } from "@prisma/client";
 
@@ -23,6 +23,7 @@ declare global {
   }
 }
 
+@Injectable()
 export class ActiveMembershipGuard implements CanActivate {
     constructor(private prisma: PrismaService) {}
 
@@ -33,31 +34,40 @@ export class ActiveMembershipGuard implements CanActivate {
         const userId = req.user?.user_id;
         if (!personId || !userId)
           throw new UnauthorizedException("User session not found.");
-
+        
         const clubId = req.headers['x-club-id'] as string;
+        console.log(clubId);
         if (!clubId)
           throw new UnauthorizedException("Club ID not provided.");
 
-        const activeMembership = await this.prisma.membership.findFirst({
-          where: {
-            personId, 
-            clubId,
-            status: ENMembershipStatus.ACTIVE,
-          },
-          include: {
-            permissions: { include: { permission: true } },
-            club: true,
-            roles: true,
-            person: {
-              include: {
-                user: true,
+        let activeMembership: null | TActiveMembershipPayload = null;
+
+        try {          
+          activeMembership = await this.prisma.membership.findFirst({
+            where: {
+              personId, 
+              clubId,
+              status: ENMembershipStatus.ACTIVE,
+            },
+            include: {
+              permissions: { include: { permission: true } },
+              club: true,
+              roles: true,
+              person: {
+                include: {
+                  user: true,
+                }
               }
             }
-          }
-        });
+          });
+        } catch (error) {
+          console.log(error);
+          throw new InternalServerErrorException("Validating user failed")
+        }
 
         if (!activeMembership)
           throw new UnauthorizedException("Active club membership not found.");
+
 
         req.activeMembership = activeMembership;
 
