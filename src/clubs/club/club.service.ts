@@ -126,7 +126,6 @@ export class ClubService {
                             data: adminPermissions.map(rp => ({
                                 membershipId: ownerMembership.id,
                                 permissionId: rp.permissionId,
-                                scope: rp.scope
                             }))
                         });
                     }

@@ -29,7 +29,6 @@ export class PermissionController {
     return await this.permissionService.grantDirectPermission(
       targetMembershipId,
       dto.permissionCode,
-      dto.scope,
     );
   }
 
@@ -55,7 +54,6 @@ export class PermissionController {
     return await this.permissionService.revokeDirectPermission(
       targetMembershipId,
       dto.permissionCode,
-      dto.scope,
       currentUser.user_id,
     );
   }

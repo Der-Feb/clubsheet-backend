@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { ENAuditCategory, ENMembershipStatus, ENPermissionScope, Membership } from '@prisma/client';
+import { ENAuditCategory, ENMembershipStatus, Membership } from '@prisma/client';
 import { ResourceNotFoundException } from '@common/exceptions/resource-not-found';
 import { PrismaService } from '@infrastructure/prisma/prisma.service';
 import { AuditLogsService } from '@infrastructure/audit-logs/audit-logs.service';
@@ -55,7 +55,6 @@ export class PermissionService {
       return {
         membershipId: membershipId,
         permissionId: rolePermission.permissionId,
-        scope: rolePermission.scope,
       }
     });
 
@@ -81,7 +80,6 @@ export class PermissionService {
   public async grantDirectPermission(
     targetMembershipId: string,
     permissionCode: string,
-    scope: ENPermissionScope = ENPermissionScope.CLUB,
   ) {
     const permission = await this.prisma.permission.findUnique({
       where: { code: permissionCode },
@@ -92,25 +90,22 @@ export class PermissionService {
 
     return this.prisma.membershipPermission.upsert({
       where: {
-        membershipId_permissionId_scope: {
+        membershipId_permissionId: {
           membershipId: targetMembershipId,
           permissionId: permission.id,
-          scope,
         }
       },
       create: {
         membershipId: targetMembershipId,
         permissionId: permission.id,
-        scope,
       },
-      update: { scope }
+      update: {}
     });
   }
 
   public async revokeDirectPermission(
     targetMembershipId: string,
     permissionCode: string,
-    scope: ENPermissionScope = ENPermissionScope.CLUB,
     user_id: string,
   ) {
     const permission = await this.prisma.permission.findUnique({
@@ -123,10 +118,9 @@ export class PermissionService {
     await this.prisma.$transaction(async(tx) => {
       await tx.membershipPermission.delete({
         where: {
-          membershipId_permissionId_scope: {
+          membershipId_permissionId: {
             membershipId: targetMembershipId,
             permissionId: permission.id,
-            scope,
           }
         }
       });
@@ -135,7 +129,7 @@ export class PermissionService {
         category: ENAuditCategory.AUTH,
         action: 'revokePermission',
         entityType: 'permission',
-        metadata: { permissionCode, scope },
+        metadata: { permissionCode },
         createdBy: user_id
       });
     });

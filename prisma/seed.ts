@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { ENPermissionAction, ENPermissionFeature, ENPermissionScope, PrismaClient } from '@prisma/client';
+import { ENPermissionAction, ENPermissionFeature, PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 
@@ -24,11 +24,13 @@ const permissionsData = [
   { code: 'ROLE_REVOKE', name: 'Revoke Roles', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.DELETE, description: 'Revoke roles to members' },
   { code: 'ROLE_DELETE', name: 'Delete Role', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.DELETE, description: 'Delete or archive non system role' },
 
-  { code: 'PLAYER_READ', name: 'Read Player Information', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.READ, description: 'View player details' },
-  { code: 'PLAYER_WRITE', name: 'Write Player Information', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.WRITE, description: 'Write player details' },
-  { code: 'PLAYER_ASSIGN', name: 'Move player to team', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.ASSIGN, description: 'Move player to team' },
-  { code: 'PLAYER_UNASSIGN', name: 'Remove player from team', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.DELETE, description: 'Remove player from team' },
+  // PLAYER MODULE
+  { code: 'PLAYER_READ', name: 'Read Player Information', module: ENPermissionFeature.PLAYER, action: ENPermissionAction.READ, description: 'View player details' },
+  { code: 'PLAYER_WRITE', name: 'Write Player Information', module: ENPermissionFeature.PLAYER, action: ENPermissionAction.WRITE, description: 'Write player details' },
+  { code: 'PLAYER_ASSIGN', name: 'Move player to team', module: ENPermissionFeature.PLAYER, action: ENPermissionAction.ASSIGN, description: 'Move player to team' },
+  { code: 'PLAYER_UNASSIGN', name: 'Remove player from team', module: ENPermissionFeature.PLAYER, action: ENPermissionAction.DELETE, description: 'Remove player from team' },
 
+  // MEMBERSHIP MODULE
   { code: 'MEMBERSHIP_READ', name: 'Read Membership Information', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.READ, description: 'View membership details' },
   { code: 'MEMBERSHIP_WRITE', name: 'Write Membership Information', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.WRITE, description: 'Write membership details' },
   { code: 'MEMBERSHIP_SUSPEND', name: 'Suspend Membership', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.DELETE, description: 'Suspend membership' },
@@ -38,8 +40,8 @@ const permissionsData = [
   { code: 'PROFILE_WRITE', name: 'Write Profile Information', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.WRITE, description: 'Write profile details' },
 
   // TEAM MODULE
-  { code: 'TEAM_READ', name: 'Read Team Information', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.READ, description: 'View team details' },
-  { code: 'TEAM_WRITE', name: 'Write Team Information', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.WRITE, description: 'Write team details' },
+  { code: 'TEAM_READ', name: 'Read Team Information', module: ENPermissionFeature.TEAM, action: ENPermissionAction.READ, description: 'View team details' },
+  { code: 'TEAM_WRITE', name: 'Write Team Information', module: ENPermissionFeature.TEAM, action: ENPermissionAction.WRITE, description: 'Write team details' },
 ];
 
 const roleData = [
@@ -51,19 +53,19 @@ const roleData = [
   {
     code: "COACH", name: "Coach",
     description: "Coach role with access to coach features of the club",
-    permissionCodes: ["CLUB_READ", "PLAYER_READ", "PLAYER_WRITE"]
+    permissionCodes: ["CLUB_READ", "PLAYER_READ", "PLAYER_WRITE", "TEAM_READ"]
   },
   {
     code: "PLAYER", name: "Player",
     description: "Player role with access to player features of the club",
-    permissionCodes: ["PLAYER_READ", "PLAYER_WRITE"]
+    permissionCodes: ["PLAYER_READ"]
   }
 ];
 
 async function main() {
   console.log("Starting data seeding ...");
   
-  console.log("Starting permissions data ...");
+  console.log("Seeding permissions ...");
   const createdPermissions = new Map<string, string>();
   for (const perm of permissionsData) {
     const permission = await prisma.permission.upsert({
@@ -86,7 +88,7 @@ async function main() {
     createdPermissions.set(permission.code, permission.id);
   }
 
-  console.log("Starting roles data ...");
+  console.log("Seeding roles ...");
   for (const roleDef of roleData) {
     const role = await prisma.role.upsert({
       where: { code: roleDef.code },
@@ -107,24 +109,22 @@ async function main() {
         ? Array.from(createdPermissions.keys())
         : roleDef.permissionCodes;
 
-    // Attach Permissions to Role via RolePermission junction model
+    // Connect Permissions to Role via RolePermission junction table
     for (const permCode of targetPermCodes) {
       const permissionId = createdPermissions.get(permCode);
       if (!permissionId) continue;
 
       await prisma.rolePermission.upsert({
         where: {
-          roleId_permissionId_scope: {
+          roleId_permissionId: {
             roleId: role.id,
             permissionId: permissionId,
-            scope: ENPermissionScope.CLUB,
           },
         },
         update: {},
         create: {
           roleId: role.id,
           permissionId: permissionId,
-          scope: ENPermissionScope.CLUB,
         },
       });
     }
@@ -140,4 +140,5 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
+    await pool.end();
   });

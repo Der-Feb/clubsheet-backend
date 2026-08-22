@@ -26,6 +26,7 @@
     "db:migrate": "npx prisma migrate dev",
     "db:types": "npx prisma generate",
     "db:seed": "ts-node ./prisma/seed.ts",
+    "db:types-remove": "rm -rf ./node_modules/.prisma/client ./src/@generated/prisma-nestjs-graphql",
     "postinstall": "prisma generate"
   },
   "dependencies": {
