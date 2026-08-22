@@ -17,6 +17,7 @@ import { TPayload } from '@iam/auth/auth.types';
 import { Request } from 'express';
 import { ActiveMembershipGuard, TActiveMembershipPayload } from '@common/guards/active-membership.guard';
 import { TUserJWTPayload } from '@iam/auth/strategy/jwt.strategy';
+import { PermissionsGuard } from '@common/guards/permissions.guard';
 
 @Controller('club')
 @UseGuards(PassportJwtGuard, EmailVerifiedGuard)
@@ -41,7 +42,7 @@ export class ClubController {
   }
 
   @Put('update')
-  @UseGuards(ActiveMembershipGuard)
+  @UseGuards(ActiveMembershipGuard, PermissionsGuard)
   @RequirePermissions(true, ['CLUB_WRITE'])
   public async updateClub(
     @Body() updateClubDto: UpdateClubDto,

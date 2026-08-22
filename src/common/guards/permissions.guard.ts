@@ -12,32 +12,32 @@ export class PermissionsGuard implements CanActivate {
       [context.getHandler(), context.getClass()],
     );
 
+    // If endpoint has no @RequirePermissions() decorator, allow access
     if (!metadata || !metadata.permissions || metadata.permissions.length === 0) {
       return true;
     }
 
     const { strict, permissions: requiredPermissions } = metadata;
     const req = this.getRequest(context);
-    const activeMembership = req.activeMembership;
 
-    // If no active membership but permissions are required, deny access
-    if (!activeMembership) {
-      throw new ForbiddenException('Active membership required to perform this action');
+    // Make sure ActiveMembershipGuard ran before this guard
+    if (!req.activeMembership) {
+      throw new ForbiddenException('Active membership context required to perform this action');
     }
 
-    // Extract all hydrated permission codes directly from activeMembership
-    const userPermissions = new Set<string>(
-      activeMembership.permissions?.map((mp: any) => mp.permission?.code).filter(Boolean) || []
-    );
+    // Read the pre-calculated effective permissions calculated by ActiveMembershipGuard
+    const effectivePermissions = new Set<string>(req.effectivePermissions || []);
 
-    // Evaluate strict (ALL) vs non-strict (ANY)
+    // Evaluate strict (ALL) vs non-strict (AT LEAST ONE)
     const hasPermission = strict
-      ? requiredPermissions.every((code) => userPermissions.has(code))
-      : requiredPermissions.some((code) => userPermissions.has(code));
+      ? requiredPermissions.every((code) => effectivePermissions.has(code))
+      : requiredPermissions.some((code) => effectivePermissions.has(code));
 
     if (!hasPermission) {
-      const missingPerms = requiredPermissions.filter((code) => !userPermissions.has(code)).join(', ');
-      throw new ForbiddenException(`Missing required permissions: ${missingPerms}`);
+      const missingPerms = requiredPermissions
+        .filter((code) => !effectivePermissions.has(code))
+        .join(', ');
+      throw new ForbiddenException(`Missing required permission(s): ${missingPerms}`);
     }
 
     return true;

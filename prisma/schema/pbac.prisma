@@ -1,0 +1,110 @@
+
+enum ENPermissionFeature {
+  ACCESS
+  TEAM
+  TRAINING
+  PLAYER
+  MEDICAL
+  FINANCE
+  MATCH
+}
+
+enum ENPermissionAction {
+  CREATE
+  READ
+  WRITE
+  DELETE
+  APPROVE
+  EXPORT
+  ASSIGN
+}
+
+model Permission {
+  id String @id @default(cuid(2))
+
+  code        String @unique
+  name        String
+  description String
+
+  module ENPermissionFeature
+  action ENPermissionAction
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  rolePermissions       RolePermission[]
+  membershipPermissions MembershipPermission[]
+
+  @@map("permissions")
+}
+
+model Role {
+  id String @id @default(cuid(2))
+
+  code        String @unique @db.VarChar(10)
+  name        String @db.VarChar(10)
+  description String @db.VarChar(100)
+
+  isSystem Boolean @default(true) @map("is_system")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  clubId String? @map("club_id")
+
+  memberships MembershipRole[]
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+model RolePermission {
+  id String @id @default(cuid(2))
+
+  roleId String @map("role_id")
+  role   Role   @relation(fields: [roleId], references: [id])
+
+  permissionId String     @map("permission_id")
+  permission   Permission @relation(fields: [permissionId], references: [id])
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model MembershipRole {
+  id String @id @default(cuid(2))
+
+  membershipId String     @map("membership_id")
+  membership   Membership @relation(fields: [membershipId], references: [id])
+
+  roleId String @map("role_id")
+  role   Role   @relation(fields: [roleId], references: [id])
+
+  assignedById String?     @map("assigned_by")
+  assignedBy   Membership? @relation("AssignedRoles", fields: [assignedById], references: [id])
+
+  assignedAt DateTime @default(now()) @map("assigned_at")
+
+  @@unique([membershipId, roleId])
+  @@map("membership_roles")
+}
+
+enum ENMembershipPermissionAction {
+  GRANT
+  REVOKE
+}
+
+model MembershipPermission {
+  id String @id @default(cuid(2))
+
+  membershipId String     @map("membership_id")
+  membership   Membership @relation(fields: [membershipId], references: [id])
+
+  permissionId String            @map("permission_id")
+  permission   Permission        @relation(fields: [permissionId], references: [id])
+
+  action ENMembershipPermissionAction @default(REVOKE)
+
+  @@unique([membershipId, permissionId])
+  @@map("membership_permissions")
+}

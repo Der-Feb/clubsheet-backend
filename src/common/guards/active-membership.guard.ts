@@ -1,17 +1,25 @@
 import { CanActivate, ExecutionContext, Injectable, InternalServerErrorException, UnauthorizedException } from "@nestjs/common";
 import { PrismaService } from "@infrastructure/prisma/prisma.service";
-import { ENMembershipStatus, Prisma } from "@prisma/client";
+import { ENMembershipPermissionAction, ENMembershipStatus, Prisma } from "@prisma/client";
 
 export type TActiveMembershipPayload = Prisma.MembershipGetPayload<{
   include: {
     permissions: { include: { permission: true } };
     club: true;
-    person: {
+    person: { include: { user: true } },
+    roles: {
       include: {
-        user: true,
+        role: {
+          include: {
+            permissions: {
+              include: {
+                permission: true
+              }
+            }
+          }
+        }
       }
     },
-    roles: true;
   };
 }>;
 
@@ -19,6 +27,7 @@ declare global {
   namespace Express {
     interface Request {
       activeMembership?: TActiveMembershipPayload;
+      effectivePermissions?: string[];
     }
   }
 }
@@ -36,7 +45,6 @@ export class ActiveMembershipGuard implements CanActivate {
           throw new UnauthorizedException("User session not found.");
         
         const clubId = req.headers['x-club-id'] as string;
-        console.log(clubId);
         if (!clubId)
           throw new UnauthorizedException("Club ID not provided.");
 
@@ -52,23 +60,52 @@ export class ActiveMembershipGuard implements CanActivate {
             include: {
               permissions: { include: { permission: true } },
               club: true,
-              roles: true,
-              person: {
+              person: { include: { user: true } },
+              roles: {
                 include: {
-                  user: true,
+                  role: {
+                    include: {
+                      permissions: {
+                        include: {
+                          permission: true
+                        }
+                      }
+                    }
+                  }
                 }
-              }
+              },
             }
           });
         } catch (error) {
-          console.log(error);
           throw new InternalServerErrorException("Validating user failed")
         }
 
         if (!activeMembership)
           throw new UnauthorizedException("Active club membership not found.");
 
+        const rolePermissions = new Set<string>();
+        for (const membershipRole of activeMembership.roles) {
+          for (const rolePerm of membershipRole.role.permissions) {
+            rolePermissions.add(rolePerm.permission.code);
+          }
+        }
 
+        const explicitGrants = new Set<string>();
+        const explicitDenies = new Set<string>();
+
+        for (const override of activeMembership.permissions) {
+          if (override.action === ENMembershipPermissionAction.GRANT) {
+            explicitGrants.add(override.permission.code);
+          } else if (override.action === ENMembershipPermissionAction.REVOKE) {
+            explicitDenies.add(override.permission.code);
+          }
+        }
+
+        const effectivePermissions = Array.from(rolePermissions)
+          .concat(Array.from(explicitGrants))
+          .filter((code) => !explicitDenies.has(code));
+
+        req.effectivePermissions = effectivePermissions;
         req.activeMembership = activeMembership;
 
         return true;
