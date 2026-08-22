@@ -59,18 +59,14 @@ export class ClubService {
         userId: string,
     ) {
         try {
-            
             const user = await this.prisma.user.findUnique({
                 where: { id: userId },
-                include: {
-                    person: true
-                }
+                include: { person: true }
             });
-    
+
             if (!user) throw new ResourceNotFoundException("User not found", "user");
-    
-            // creating the club and new membership of the own
-            return await this.prisma.$transaction(async(tx) => {
+
+            return await this.prisma.$transaction(async (tx) => {
                 const club = await tx.club.create({
                     data: {
                         name: createClubDto.name,
@@ -80,13 +76,12 @@ export class ClubService {
                         status: ENClubStatus.ACTIVE,
                     }
                 });
-    
-                // Ensure OWNER type is present alongside any types passed in DTO
+
                 const uniqueTypes = Array.from(
                     new Set([ENMembershipType.OWNER, ...createClubDto.membershipTypes])
                 );
-    
-                // create the membership of the creator
+
+                // Create membership for creator
                 const ownerMembership = await tx.membership.create({
                     data: {
                         clubId: club.id,
@@ -97,17 +92,14 @@ export class ClubService {
                         },
                         status: ENMembershipStatus.ACTIVE
                     },
-                    include: {
-                        types: true
-                    }
+                    include: { types: true }
                 });
 
-                // Get the ADMIN role
+                // Assign ADMIN role to creator
                 const adminRole = await tx.role.findUnique({
                     where: { code: 'ADMIN' }
                 });
 
-                // Assign ADMIN role to the club creator
                 if (adminRole) {
                     await tx.membershipRole.create({
                         data: {
@@ -115,31 +107,28 @@ export class ClubService {
                             roleId: adminRole.id
                         }
                     });
-
-                    // Sync all permissions from ADMIN role to the membership
-                    const adminPermissions = await tx.rolePermission.findMany({
-                        where: { roleId: adminRole.id }
-                    });
-
-                    if (adminPermissions.length > 0) {
-                        const result = await tx.membershipPermission.createMany({
-                            data: adminPermissions.map(rp => ({
-                                membershipId: ownerMembership.id,
-                                permissionId: rp.permissionId,
-                            }))
-                        });
-                    }
+                    // NO membershipPermission records inserted here!
+                    // Role defaults resolve automatically at runtime via ActiveMembershipGuard.
                 }
-    
+
                 const finalizedClub = await tx.club.update({
                     where: { id: club.id },
                     data: { createdById: ownerMembership.id }
                 });
-    
+
                 return {
                     success: true,
                     message: "Club created successfully with membership",
-                }
+                    data: {
+                        id: club.id,
+                        name: club.name,
+                        shortName: club.shortName,
+                        logo: club.logo,
+                        country: club.country,
+                        status: club.status,
+                        createdById: ownerMembership.id,
+                    }
+                };
             });
         } catch (error) {
             console.error('Club creation error:', error);

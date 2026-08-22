@@ -147,6 +147,7 @@
 
 ## TODO
 - [ ] On club, i removed creating the club with permissions, to mean that the user will have other series of steps to actually verify the validity of the club
+- [ ] CRUD membership of types in the club 
 - [ ] Make the club invitation permissions 
 
 
