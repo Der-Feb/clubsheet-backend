@@ -78,8 +78,9 @@ model Team {
 
   name String @db.VarChar(50)
 
-  trainings Training[]
-  players   Player[]
+  trainings        Training[]
+  players          Player[]
+  coachAssignments CoachAssignment[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

@@ -75,3 +75,14 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 http/
 
 scripts/
+prompts/
+
+## generated graphql-nestjs-prisma types
+src/@generated/
+
+## testing payloads
+test/
+payloads/
+
+## scripts
+*.sh
