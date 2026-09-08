@@ -5,12 +5,8 @@ import { CommunicationModule } from '@infrastructure/communication/communication
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [
-    ConfigModule,
-    CommunicationModule,
-    AuditLogsModule,
-  ],
+  imports: [ConfigModule, CommunicationModule, AuditLogsModule],
   providers: [UserTokenService],
-  exports: [UserTokenService]
+  exports: [UserTokenService],
 })
 export class UserTokenModule {}

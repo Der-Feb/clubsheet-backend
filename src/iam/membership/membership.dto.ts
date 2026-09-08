@@ -1,13 +1,19 @@
-import { IsCuid2 } from "@common/validators/is-cuid.validator";
-import { ENMembershipType } from "@prisma/client";
-import { Transform } from "class-transformer";
-import { IsEmail, IsEnum, IsNotEmpty, IsString, MinLength } from "class-validator";
+import { IsCuid2 } from '@common/validators/is-cuid.validator';
+import { ENMembershipType } from '@prisma/client';
+import { Transform } from 'class-transformer';
+import {
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsString,
+  MinLength,
+} from 'class-validator';
 
 export class AcceptInvitationDto {
   @Transform(({ value }) => value.trim())
   @IsNotEmpty()
   @IsString()
-  @MinLength(5, { message: "Invalid token"})
+  @MinLength(5, { message: 'Invalid token' })
   token: string;
 }
 
@@ -15,10 +21,10 @@ export class InviteUserDto {
   @Transform(({ value }) => value?.trim().toLowerCase())
   @IsEmail()
   @IsNotEmpty()
-  invitee_email: string; 
+  invitee_email: string;
 
   @IsEnum(ENMembershipType)
-  type: ENMembershipType
+  type: ENMembershipType;
 }
 
 export class CreateMembershipDto {

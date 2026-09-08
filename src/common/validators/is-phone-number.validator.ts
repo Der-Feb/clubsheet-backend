@@ -1,11 +1,18 @@
-import { ValidationArguments, ValidatorConstraint, ValidatorConstraintInterface } from "class-validator";
-import { PhoneNumberUtil } from "google-libphonenumber";
+import {
+  ValidationArguments,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+} from 'class-validator';
+import { PhoneNumberUtil } from 'google-libphonenumber';
 
 const PhoneUtil = PhoneNumberUtil.getInstance();
 
-@ValidatorConstraint({ name: "isPhoneNumber", async: false })
+@ValidatorConstraint({ name: 'isPhoneNumber', async: false })
 export class IsPhoneNumberConstraint implements ValidatorConstraintInterface {
-  public validate(phoneNumber: any, validationArguments?: ValidationArguments): boolean {
+  public validate(
+    phoneNumber: any,
+    validationArguments?: ValidationArguments,
+  ): boolean {
     if (typeof phoneNumber !== 'string' || phoneNumber.length < 1) return false;
 
     try {
@@ -17,6 +24,6 @@ export class IsPhoneNumberConstraint implements ValidatorConstraintInterface {
   }
 
   public defaultMessage(args: ValidationArguments): string {
-    return "Phone number must be a valid international phone number starting with + (e.g., +250788000000)";
+    return 'Phone number must be a valid international phone number starting with + (e.g., +250788000000)';
   }
 }

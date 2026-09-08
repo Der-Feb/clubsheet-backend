@@ -5,12 +5,9 @@ import { AuditLogsModule } from '@infrastructure/audit-logs/audit-logs.module';
 import { InvitationController } from './invitation.controller';
 
 @Module({
-  imports: [
-    CommunicationModule,
-    AuditLogsModule,
-  ],
+  imports: [CommunicationModule, AuditLogsModule],
   controllers: [InvitationController],
   providers: [InvitationService],
-  exports: [InvitationService]
+  exports: [InvitationService],
 })
 export class InvitationModule {}

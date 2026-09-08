@@ -6,41 +6,44 @@ import { ResourceNotFoundException } from '@common/exceptions/resource-not-found
 import { AuditLogsService } from '@infrastructure/audit-logs/audit-logs.service';
 import { maskEmail } from '@common/utils/string-func';
 import { ConfigService } from '@nestjs/config';
-import { generateApplicationToken, computeTokenHash } from '@common/utils/token-hash.util';
+import {
+  generateApplicationToken,
+  computeTokenHash,
+} from '@common/utils/token-hash.util';
 import * as argon2 from 'argon2';
 
 @Injectable()
 export class UserTokenService {
-    constructor(
-        private readonly prisma: PrismaService,
-        private readonly communicationService: CommunicationService,
-        private readonly auditLogsService: AuditLogsService,
-        private readonly configService: ConfigService,
-    ) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly communicationService: CommunicationService,
+    private readonly auditLogsService: AuditLogsService,
+    private readonly configService: ConfigService,
+  ) {}
 
-    public async userExists(userId: string) {
-        if (!userId) throw new BadRequestException('User ID is required');
-        
-        return await this.prisma.user.findUnique({
-            where: { id: userId },
-            include: { person: true },
-        });
-    }
+  public async userExists(userId: string) {
+    if (!userId) throw new BadRequestException('User ID is required');
 
-    private fiveMinutes = 1000 * 60 * 5;
+    return await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { person: true },
+    });
+  }
 
-    /**
-     * Generate a CSPRNG token and its HMAC-SHA-256 hash using TOKEN_HASH_SECRET.
-     * The raw token is sent to the user; only the hash is stored in the database.
-     * Validation is a direct unique lookup — no iteration, no Argon2.
-     */
-    private giveTokenAndHash(): { token: string; hash: string } {
-        const secret = this.configService.getOrThrow<string>('TOKEN_HASH_SECRET');
-        return generateApplicationToken(secret);
-    }
+  private fiveMinutes = 1000 * 60 * 5;
 
-    private verifyEmailHtmlBody(name: string, token: string) {
-        return `
+  /**
+   * Generate a CSPRNG token and its HMAC-SHA-256 hash using TOKEN_HASH_SECRET.
+   * The raw token is sent to the user; only the hash is stored in the database.
+   * Validation is a direct unique lookup — no iteration, no Argon2.
+   */
+  private giveTokenAndHash(): { token: string; hash: string } {
+    const secret = this.configService.getOrThrow<string>('TOKEN_HASH_SECRET');
+    return generateApplicationToken(secret);
+  }
+
+  private verifyEmailHtmlBody(name: string, token: string) {
+    return `
         <!DOCTYPE html>
             <html>
             <head>
@@ -94,10 +97,10 @@ export class UserTokenService {
             </body>
             </html>
         `;
-    }
+  }
 
-    private resetPasswordHtmlBody(firstName: string, token: string): string {
-        return `
+  private resetPasswordHtmlBody(firstName: string, token: string): string {
+    return `
         <!DOCTYPE html>
         <html>
         <head>
@@ -151,270 +154,287 @@ export class UserTokenService {
         </body>
         </html>
         `;
+  }
+
+  /**
+   * Generate token, keep the hash, the user assigned to it, the type, the expiration time, and send token to user
+   * @param to
+   * @param verifyToken
+   */
+  public async sendVerifyEmail(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      include: { person: true },
+    });
+    if (!user) throw new ResourceNotFoundException('User not found', 'User');
+    if (user.isEmailVerified)
+      throw new BadRequestException('User email is already verified');
+    const userId = user.id;
+
+    // rate limiter of tokens the user can send
+    const tokenCountInWindow = await this.prisma.userToken.findMany({
+      where: {
+        userId,
+        type: ENUserTokenType.EMAIL_VERIFICATION,
+        createdAt: { gte: new Date(Date.now() - this.fiveMinutes) },
+      },
+    });
+    // If they hit the limit, lock them out early
+    if (tokenCountInWindow.length >= 3) {
+      throw new BadRequestException(
+        'You have requested too many verification codes. Please check your inbox or wait 5 minutes before trying again.',
+      );
     }
 
-    /**
-     * Generate token, keep the hash, the user assigned to it, the type, the expiration time, and send token to user
-     * @param to 
-     * @param verifyToken 
-     */
-    public async sendVerifyEmail(email: string) {
-        const user = await this.prisma.user.findUnique({ where: { email }, include: { person: true } });
-        if(!user) throw new ResourceNotFoundException("User not found", "User");
-        if(user.isEmailVerified) throw new BadRequestException("User email is already verified");
-        const userId = user.id;
-        
-        // rate limiter of tokens the user can send
-        const tokenCountInWindow = await this.prisma.userToken.findMany({
-            where: {
-                userId,
-                type: ENUserTokenType.EMAIL_VERIFICATION,
-                createdAt: { gte: new Date(Date.now() - this.fiveMinutes) },
-            }
-        });
-        // If they hit the limit, lock them out early
-        if (tokenCountInWindow.length >= 3) {
-            throw new BadRequestException(
-                "You have requested too many verification codes. Please check your inbox or wait 5 minutes before trying again."
-            );
-        }
-        
-        const { token, hash } = this.giveTokenAndHash()
-        let disruptedTokensCount = 0;
+    const { token, hash } = this.giveTokenAndHash();
+    let disruptedTokensCount = 0;
 
-        // transaction based token creation and email sending
-        await this.prisma.$transaction(async (tx) => {   
-            // loop in others of the user and mark them as disrupted
-            const deleteResult = await tx.userToken.deleteMany({
-                where: {
-                    userId,
-                    type: ENUserTokenType.EMAIL_VERIFICATION,
-                },
-            });
+    // transaction based token creation and email sending
+    await this.prisma.$transaction(async (tx) => {
+      // loop in others of the user and mark them as disrupted
+      const deleteResult = await tx.userToken.deleteMany({
+        where: {
+          userId,
+          type: ENUserTokenType.EMAIL_VERIFICATION,
+        },
+      });
 
-            disruptedTokensCount = deleteResult.count;
+      disruptedTokensCount = deleteResult.count;
 
-            await tx.userToken.create({
-                data: {
-                    hash,
-                    type: ENUserTokenType.EMAIL_VERIFICATION,
-                    expiresAt: new Date(Date.now() + this.fiveMinutes), // expires in 5 minutes
-                    userId: userId,
-                }
-            });
+      await tx.userToken.create({
+        data: {
+          hash,
+          type: ENUserTokenType.EMAIL_VERIFICATION,
+          expiresAt: new Date(Date.now() + this.fiveMinutes), // expires in 5 minutes
+          userId: userId,
+        },
+      });
 
-            // when send email fail, we the exception, we roll back
-            await this.communicationService.sendEmail(
-                user.email,
-                "Email Verification",
-                `Hello, ${user.person.firstName}!`,
-                this.verifyEmailHtmlBody(user.person.firstName, token),
-            );
-        });
+      // when send email fail, we the exception, we roll back
+      await this.communicationService.sendEmail(
+        user.email,
+        'Email Verification',
+        `Hello, ${user.person.firstName}!`,
+        this.verifyEmailHtmlBody(user.person.firstName, token),
+      );
+    });
 
-        await this.auditLogsService.createLog({
-            category: ENAuditCategory.AUTH,
-            action: "sendVerifyEmail",
-            entityType: "UserToken",
-            metadata: { userId },
-            description: `Verification email dispatched successfully. Disrupted ${disruptedTokensCount} outstanding active user tokens.`,
-            createdBy: user.id
-        });
+    await this.auditLogsService.createLog({
+      category: ENAuditCategory.AUTH,
+      action: 'sendVerifyEmail',
+      entityType: 'UserToken',
+      metadata: { userId },
+      description: `Verification email dispatched successfully. Disrupted ${disruptedTokensCount} outstanding active user tokens.`,
+      createdBy: user.id,
+    });
 
-        return {
-            success: true,
-            message: "Verification email sent successfully",
-            details: `Check your email ${maskEmail(user.email)}, the token expires in 5 minutes`
-        }
-    }
-    
-    public async verifyEmail(email: string, token: string) {
-        const user = await this.prisma.user.findUnique({ where: { email }, include: { person: true }});
-        if(!user) throw new ResourceNotFoundException("User not found", "User");
-        if(user.isEmailVerified) throw new BadRequestException("User email is already verified");
-        
-        const userId = user.id;
-        const now = new Date();
+    return {
+      success: true,
+      message: 'Verification email sent successfully',
+      details: `Check your email ${maskEmail(user.email)}, the token expires in 5 minutes`,
+    };
+  }
 
-        // Compute HMAC digest and look up directly — no iteration needed
-        const secret = this.configService.getOrThrow<string>('TOKEN_HASH_SECRET');
-        const tokenHash = computeTokenHash(secret, token);
+  public async verifyEmail(email: string, token: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      include: { person: true },
+    });
+    if (!user) throw new ResourceNotFoundException('User not found', 'User');
+    if (user.isEmailVerified)
+      throw new BadRequestException('User email is already verified');
 
-        const tokenRecord = await this.prisma.userToken.findUnique({
-            where: { hash: tokenHash },
-        });
+    const userId = user.id;
+    const now = new Date();
 
-        if (
-            !tokenRecord ||
-            tokenRecord.userId !== userId ||
-            tokenRecord.type !== ENUserTokenType.EMAIL_VERIFICATION ||
-            tokenRecord.expiresAt < now
-        ) {
-            throw new BadRequestException("Token is invalid or is expired");
-        }
+    // Compute HMAC digest and look up directly — no iteration needed
+    const secret = this.configService.getOrThrow<string>('TOKEN_HASH_SECRET');
+    const tokenHash = computeTokenHash(secret, token);
 
-        let usedTokens = 0;
-        await this.prisma.$transaction(async(tx) => {
-            // Delete all email verification tokens for this user
-            const usedTokensResult = await tx.userToken.deleteMany({
-                where: { 
-                    userId: user.id,
-                    type: ENUserTokenType.EMAIL_VERIFICATION,
-                }
-            });
-            usedTokens = usedTokensResult.count;
-    
-            // Mark user as verified
-            await tx.user.update({
-                where: { id: userId },
-                data: { isEmailVerified: true }
-            });
-        });
+    const tokenRecord = await this.prisma.userToken.findUnique({
+      where: { hash: tokenHash },
+    });
 
-        // save the audit log, 
-        await this.auditLogsService.createLog({
-            category: ENAuditCategory.AUTH,
-            action: "verifyEmail",
-            entityType: "User, UserToken",
-            metadata: { userId },
-            description: `User email verified successfully after using ${usedTokens} user tokens`,
-            createdBy: user.id
-        });
-
-        return {
-            success: true,
-            message: "Email verification successful",
-        }
-    }
-    
-    public async forgotPassword(email: string) {
-        const user = await this.prisma.user.findUnique({
-            where: { email },
-            include: { person: true },
-        });
-        
-        if (!user) throw new ResourceNotFoundException("User not found with this email", "User");
-
-        const tokenCountInWindow = await this.prisma.userToken.findMany({
-            where: {
-                userId: user.id,
-                type: ENUserTokenType.CHANGE_PASSWORD,
-                createdAt: { gte: new Date(Date.now() - this.fiveMinutes) },
-            }
-        });
-
-        if (tokenCountInWindow.length >= 3) {
-            throw new BadRequestException(
-                "You have requested too many password reset codes. Please check your inbox or wait 5 minutes before trying again."
-            );
-        }
-        
-        const { token, hash } = this.giveTokenAndHash();
-        let disruptedCount = 0;
-
-        // 3. Atomic Transaction
-        await this.prisma.$transaction(async (tx) => {   
-            // Hard-delete previous outstanding reset tokens to disrupt them completely
-            const deleteResult = await tx.userToken.deleteMany({
-                where: {
-                    userId: user.id,
-                    type: ENUserTokenType.CHANGE_PASSWORD,
-                }
-            });
-            disruptedCount = deleteResult.count;
-
-            // Save the active token
-            await tx.userToken.create({
-                data: {
-                    hash,
-                    type: ENUserTokenType.CHANGE_PASSWORD,
-                    expiresAt: new Date(Date.now() + this.fiveMinutes),
-                    userId: user.id,
-                }
-            });
-
-            // Send email with green theme or text format; rolling back entirely if it fails
-            await this.communicationService.sendEmail(
-                user.email,
-                "Reset Your Password",
-                `Hello, ${user.person.firstName}!`,
-                this.resetPasswordHtmlBody(user.person.firstName, token),
-            );
-        });
-
-        // 4. Save the Audit Log for request tracking
-        await this.auditLogsService.createLog({
-            category: ENAuditCategory.AUTH,
-            action: "forgotPasswordRequest",
-            entityType: "UserToken",
-            metadata: { userId: user.id },
-            description: `Password reset requested. Disrupted ${disruptedCount} historical active reset tokens.`,
-            createdBy: user.id
-        });
-
-        return {
-            success: true,
-            message: "Password reset verification code sent successfully",
-            details: `Check your email ${maskEmail(user.email)}, the token expires in 5 minutes`
-        };
+    if (
+      !tokenRecord ||
+      tokenRecord.userId !== userId ||
+      tokenRecord.type !== ENUserTokenType.EMAIL_VERIFICATION ||
+      tokenRecord.expiresAt < now
+    ) {
+      throw new BadRequestException('Token is invalid or is expired');
     }
 
-    public async resetPassword(dto: { email: string; token: string; newPassword: string }) {
-        const { email, token, newPassword } = dto;
+    let usedTokens = 0;
+    await this.prisma.$transaction(async (tx) => {
+      // Delete all email verification tokens for this user
+      const usedTokensResult = await tx.userToken.deleteMany({
+        where: {
+          userId: user.id,
+          type: ENUserTokenType.EMAIL_VERIFICATION,
+        },
+      });
+      usedTokens = usedTokensResult.count;
 
-        const user = await this.prisma.user.findUnique({ where: { email } });
-        if (!user) throw new ResourceNotFoundException("User not found", "User");
+      // Mark user as verified
+      await tx.user.update({
+        where: { id: userId },
+        data: { isEmailVerified: true },
+      });
+    });
 
-        const now = new Date();
+    // save the audit log,
+    await this.auditLogsService.createLog({
+      category: ENAuditCategory.AUTH,
+      action: 'verifyEmail',
+      entityType: 'User, UserToken',
+      metadata: { userId },
+      description: `User email verified successfully after using ${usedTokens} user tokens`,
+      createdBy: user.id,
+    });
 
-        // Compute HMAC digest and look up directly — no iteration needed
-        const secret = this.configService.getOrThrow<string>('TOKEN_HASH_SECRET');
-        const tokenHash = computeTokenHash(secret, token);
+    return {
+      success: true,
+      message: 'Email verification successful',
+    };
+  }
 
-        const tokenRecord = await this.prisma.userToken.findUnique({
-            where: { hash: tokenHash },
-        });
+  public async forgotPassword(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      include: { person: true },
+    });
 
-        if (
-            !tokenRecord ||
-            tokenRecord.userId !== user.id ||
-            tokenRecord.type !== ENUserTokenType.CHANGE_PASSWORD ||
-            tokenRecord.expiresAt < now
-        ) {
-            throw new BadRequestException("Token is invalid or has expired");
-        }
+    if (!user)
+      throw new ResourceNotFoundException(
+        'User not found with this email',
+        'User',
+      );
 
-        const hashedNewPassword = await argon2.hash(newPassword);
-        let clearedTokensCount = 0;
+    const tokenCountInWindow = await this.prisma.userToken.findMany({
+      where: {
+        userId: user.id,
+        type: ENUserTokenType.CHANGE_PASSWORD,
+        createdAt: { gte: new Date(Date.now() - this.fiveMinutes) },
+      },
+    });
 
-        await this.prisma.$transaction(async (tx) => {
-            const deleteResult = await tx.userToken.deleteMany({
-                where: { 
-                    userId: user.id,
-                    type: ENUserTokenType.CHANGE_PASSWORD,
-                }
-            });
-            clearedTokensCount = deleteResult.count;
-
-            await tx.user.update({
-                where: { id: user.id },
-                data: { passwordHash: hashedNewPassword }
-            });
-        });
-
-        // Fire the Audit Log tracking
-        await this.auditLogsService.createLog({
-            category: ENAuditCategory.AUTH,
-            action: "resetPasswordComplete",
-            entityType: "User, UserToken",
-            metadata: { userId: user.id },
-            description: `User password reset completed successfully. Purged ${clearedTokensCount} associated tokens from data layer.`,
-            createdBy: user.id
-        });
-
-        return {
-            success: true,
-            message: "Password updated successfully. You can now log in with your new credentials.",
-        };
+    if (tokenCountInWindow.length >= 3) {
+      throw new BadRequestException(
+        'You have requested too many password reset codes. Please check your inbox or wait 5 minutes before trying again.',
+      );
     }
+
+    const { token, hash } = this.giveTokenAndHash();
+    let disruptedCount = 0;
+
+    // 3. Atomic Transaction
+    await this.prisma.$transaction(async (tx) => {
+      // Hard-delete previous outstanding reset tokens to disrupt them completely
+      const deleteResult = await tx.userToken.deleteMany({
+        where: {
+          userId: user.id,
+          type: ENUserTokenType.CHANGE_PASSWORD,
+        },
+      });
+      disruptedCount = deleteResult.count;
+
+      // Save the active token
+      await tx.userToken.create({
+        data: {
+          hash,
+          type: ENUserTokenType.CHANGE_PASSWORD,
+          expiresAt: new Date(Date.now() + this.fiveMinutes),
+          userId: user.id,
+        },
+      });
+
+      // Send email with green theme or text format; rolling back entirely if it fails
+      await this.communicationService.sendEmail(
+        user.email,
+        'Reset Your Password',
+        `Hello, ${user.person.firstName}!`,
+        this.resetPasswordHtmlBody(user.person.firstName, token),
+      );
+    });
+
+    // 4. Save the Audit Log for request tracking
+    await this.auditLogsService.createLog({
+      category: ENAuditCategory.AUTH,
+      action: 'forgotPasswordRequest',
+      entityType: 'UserToken',
+      metadata: { userId: user.id },
+      description: `Password reset requested. Disrupted ${disruptedCount} historical active reset tokens.`,
+      createdBy: user.id,
+    });
+
+    return {
+      success: true,
+      message: 'Password reset verification code sent successfully',
+      details: `Check your email ${maskEmail(user.email)}, the token expires in 5 minutes`,
+    };
+  }
+
+  public async resetPassword(dto: {
+    email: string;
+    token: string;
+    newPassword: string;
+  }) {
+    const { email, token, newPassword } = dto;
+
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user) throw new ResourceNotFoundException('User not found', 'User');
+
+    const now = new Date();
+
+    // Compute HMAC digest and look up directly — no iteration needed
+    const secret = this.configService.getOrThrow<string>('TOKEN_HASH_SECRET');
+    const tokenHash = computeTokenHash(secret, token);
+
+    const tokenRecord = await this.prisma.userToken.findUnique({
+      where: { hash: tokenHash },
+    });
+
+    if (
+      !tokenRecord ||
+      tokenRecord.userId !== user.id ||
+      tokenRecord.type !== ENUserTokenType.CHANGE_PASSWORD ||
+      tokenRecord.expiresAt < now
+    ) {
+      throw new BadRequestException('Token is invalid or has expired');
+    }
+
+    const hashedNewPassword = await argon2.hash(newPassword);
+    let clearedTokensCount = 0;
+
+    await this.prisma.$transaction(async (tx) => {
+      const deleteResult = await tx.userToken.deleteMany({
+        where: {
+          userId: user.id,
+          type: ENUserTokenType.CHANGE_PASSWORD,
+        },
+      });
+      clearedTokensCount = deleteResult.count;
+
+      await tx.user.update({
+        where: { id: user.id },
+        data: { passwordHash: hashedNewPassword },
+      });
+    });
+
+    // Fire the Audit Log tracking
+    await this.auditLogsService.createLog({
+      category: ENAuditCategory.AUTH,
+      action: 'resetPasswordComplete',
+      entityType: 'User, UserToken',
+      metadata: { userId: user.id },
+      description: `User password reset completed successfully. Purged ${clearedTokensCount} associated tokens from data layer.`,
+      createdBy: user.id,
+    });
+
+    return {
+      success: true,
+      message:
+        'Password updated successfully. You can now log in with your new credentials.',
+    };
+  }
 }

@@ -1,7 +1,12 @@
 import { IsPhoneNumberConstraint } from '@common/validators/is-phone-number.validator';
 import { IntersectionType } from '@nestjs/mapped-types';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { ENCoachPosition, ENCoachResponsibility, ENPlayerPosition, ENPreferredFoot } from '@prisma/client';
+import {
+  ENCoachPosition,
+  ENCoachResponsibility,
+  ENPlayerPosition,
+  ENPreferredFoot,
+} from '@prisma/client';
 import {
   IsArray,
   IsBoolean,
@@ -43,7 +48,7 @@ export class CreateProfileDto {
 export class CreatePlayerProfileDto {
   @IsEnum(() => ENPlayerPosition)
   position!: ENPlayerPosition;
-  
+
   @IsOptional()
   @IsEnum(() => ENPreferredFoot)
   preferredFoot?: ENPreferredFoot;
@@ -51,7 +56,7 @@ export class CreatePlayerProfileDto {
   @IsOptional()
   @IsDecimal()
   heightCm?: number;
-  
+
   @IsOptional()
   @IsDecimal()
   weightKg?: number;
@@ -61,7 +66,7 @@ export class CreateCoachProfileDto {
   @IsString()
   @IsOptional()
   specialization?: string;
-  
+
   @IsString()
   @IsOptional()
   license?: string;
@@ -72,10 +77,9 @@ export class CreateCoachAssignmentDto {
   @IsArray()
   @IsEnum(() => ENCoachResponsibility, { each: true })
   responsibilities?: ENCoachResponsibility[];
-  
+
   @IsEnum(() => ENCoachPosition)
   position!: ENCoachPosition;
-
 }
 
 export class CreatePlayerAndProfileDto {

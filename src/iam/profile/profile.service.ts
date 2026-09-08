@@ -2,7 +2,11 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '@infrastructure/prisma/prisma.service';
 import { AuditLogsService } from '@infrastructure/audit-logs/audit-logs.service';
 import { TActiveMembershipPayload } from '@common/guards/active-membership.guard';
-import { CreateCoachProfileDto, CreatePlayerProfileDto, CreateProfileDto } from './profile.dto';
+import {
+  CreateCoachProfileDto,
+  CreatePlayerProfileDto,
+  CreateProfileDto,
+} from './profile.dto';
 import { isInstance } from 'class-validator';
 
 @Injectable()
@@ -12,7 +16,10 @@ export class ProfileService {
     private readonly auditLogsService: AuditLogsService,
   ) {}
 
-  public async createProfile(membership: TActiveMembershipPayload, profileData?: CreateProfileDto) {
+  public async createProfile(
+    membership: TActiveMembershipPayload,
+    profileData?: CreateProfileDto,
+  ) {
     // check if the person already has a profile
     const existingProfile = await this.prisma.profile.findFirst({
       where: { personId: membership.personId },
@@ -31,16 +38,16 @@ export class ProfileService {
   }
 
   public async createPlayerProfile(
-    membership: TActiveMembershipPayload, 
+    membership: TActiveMembershipPayload,
     playerData: CreatePlayerProfileDto,
-    profileData?: CreateProfileDto
+    profileData?: CreateProfileDto,
   ) {
     // check if the player has a profile already
     const existingProfile = await this.prisma.profile.findFirst({
       where: { personId: membership.personId },
     });
 
-    if (!profileData || !isInstance(profileData, CreateProfileDto) ) {
+    if (!profileData || !isInstance(profileData, CreateProfileDto)) {
       throw new BadRequestException('Profile data is missing or invalid');
     }
 
@@ -57,16 +64,16 @@ export class ProfileService {
   }
 
   public async createCoachProfile(
-    membership: TActiveMembershipPayload, 
+    membership: TActiveMembershipPayload,
     coachData: CreateCoachProfileDto,
-    profileData?: CreateProfileDto
+    profileData?: CreateProfileDto,
   ) {
     // check if the coach has a profile already
     const existingProfile = await this.prisma.profile.findFirst({
       where: { personId: membership.personId },
     });
 
-    if (!profileData || !isInstance(profileData, CreateProfileDto) ) {
+    if (!profileData || !isInstance(profileData, CreateProfileDto)) {
       throw new BadRequestException('Profile data is missing or invalid');
     }
 
@@ -88,7 +95,7 @@ export class ProfileService {
       include: {
         playerProfile: true,
         coachProfile: true,
-      }
+      },
     });
   }
 }

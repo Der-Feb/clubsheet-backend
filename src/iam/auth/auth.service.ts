@@ -1,4 +1,9 @@
-import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from '@infrastructure/prisma/prisma.service';
 import { LoginDto, RegisterUserPersonDto } from './auth.dto';
 import * as argon2 from 'argon2';
@@ -16,156 +21,151 @@ export type TUserWithPerson = Prisma.UserGetPayload<{
 
 @Injectable()
 export class AuthService {
-    constructor(
-        private readonly prisma: PrismaService,
-        private readonly jwtService: JwtService,
-        private readonly auditLogsService: AuditLogsService
-    ) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
+    private readonly auditLogsService: AuditLogsService,
+  ) {}
 
-    private async ensurePersonAccountExists(email: string) {
-        if (await this.prisma.user.findUnique({ where: { email } })) 
-            return true;
-        return false;
+  private async ensurePersonAccountExists(email: string) {
+    if (await this.prisma.user.findUnique({ where: { email } })) return true;
+    return false;
+  }
+
+  public returnSanitizedUserData(user: TUserWithPerson): TUserData {
+    return {
+      user_id: user.id,
+      person_id: user.person.id,
+      name: `${user.person.firstName} ${user.person.lastName}`,
+      email: user.email,
+      isEmailVerified: user.isEmailVerified,
+    };
+  }
+
+  /**
+   * A completely new user is going to register, we creae person - user records
+   *
+   * @param registerDto
+   * @returns
+   */
+  public async registerUserPerson(registerDto: RegisterUserPersonDto) {
+    if (await this.ensurePersonAccountExists(registerDto.email)) {
+      throw new ConflictException(
+        'Person with that email account already exists',
+      );
     }
 
-    public returnSanitizedUserData(user: TUserWithPerson): TUserData {
-        return {           
-            user_id: user.id,
-            person_id: user.person.id,
-            name: `${user.person.firstName} ${user.person.lastName}`,
-            email: user.email,
-            isEmailVerified: user.isEmailVerified,
-        }
-    }
+    const hashedPassword = await argon2.hash(registerDto.password);
 
-    /**
-     * A completely new user is going to register, we creae person - user records
-     * 
-     * @param registerDto 
-     * @returns 
-     */
-    public async registerUserPerson(registerDto: RegisterUserPersonDto) {
-        if (await this.ensurePersonAccountExists(registerDto.email)) {
-            throw new ConflictException('Person with that email account already exists');
-        }
-
-        const hashedPassword = await argon2.hash(registerDto.password);
-
-        try {
-            const newUser = await this.prisma.$transaction(async(tx) => {
-                return await tx.user.create({
-                    data: {
-                        email: registerDto.email,
-                        passwordHash: hashedPassword,
-                        person: {
-                            create: {
-                                firstName: registerDto.firstName,
-                                lastName: registerDto.lastName,
-                                dob: registerDto.dob,
-                                nationality: registerDto.nationality,
-                                gender: registerDto.gender,
-                            },
-                        },
-                    }, include: { person: true }
-                });
-            });
-
-            return this.returnSanitizedUserData(newUser);
-        } catch (error) {
-            console.log(error);
-            if(error instanceof Prisma.PrismaClientKnownRequestError)
-                throw new BadRequestException(parsePrismaError(error));
-
-            throw new BadRequestException("Unkown Error");
-        }
-    }
-
-    public async getUserData(user_id: string, person_id: string) {
-        const user = await this.prisma.user.findUnique({
-            where: {
-                id: user_id,
-                person: { id: person_id }
+    try {
+      const newUser = await this.prisma.$transaction(async (tx) => {
+        return await tx.user.create({
+          data: {
+            email: registerDto.email,
+            passwordHash: hashedPassword,
+            person: {
+              create: {
+                firstName: registerDto.firstName,
+                lastName: registerDto.lastName,
+                dob: registerDto.dob,
+                nationality: registerDto.nationality,
+                gender: registerDto.gender,
+              },
             },
-            include: { person: true }
+          },
+          include: { person: true },
         });
+      });
 
-        if(!user)
-            throw new ResourceNotFoundException("User not found", "User");
+      return this.returnSanitizedUserData(newUser);
+    } catch (error) {
+      console.log(error);
+      if (error instanceof Prisma.PrismaClientKnownRequestError)
+        throw new BadRequestException(parsePrismaError(error));
 
-        return this.returnSanitizedUserData(user);
+      throw new BadRequestException('Unkown Error');
+    }
+  }
+
+  public async getUserData(user_id: string, person_id: string) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: user_id,
+        person: { id: person_id },
+      },
+      include: { person: true },
+    });
+
+    if (!user) throw new ResourceNotFoundException('User not found', 'User');
+
+    return this.returnSanitizedUserData(user);
+  }
+
+  public async validateCredentials(loginDto: LoginDto) {
+    // Validate DTO structure first to ensure we have required fields
+    if (!loginDto || !loginDto.email || !loginDto.password) {
+      throw new UnauthorizedException('Email and password are required');
     }
 
-    public async validateCredentials(loginDto: LoginDto) {
-        // Validate DTO structure first to ensure we have required fields
-        if (!loginDto || !loginDto.email || !loginDto.password) {
-            throw new UnauthorizedException('Email and password are required');
-        }
+    // Trim whitespace from inputs
+    const email = loginDto.email.trim().toLowerCase();
+    const password = loginDto.password.trim();
 
-        // Trim whitespace from inputs
-        const email = loginDto.email.trim().toLowerCase();
-        const password = loginDto.password.trim();
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      include: { person: true },
+    });
 
-        const user = await this.prisma.user.findUnique({
-            where: { email },
-            include: { person: true },
-        });
+    if (!user) throw new UnauthorizedException('Invalid credentials');
 
-        
-        if (!user) throw new UnauthorizedException('Invalid credentials');
-        
-        try {
-            const validPassword = await argon2.verify(
-                user.passwordHash, 
-                password
-            );
-            
-            if (!validPassword) {
-                throw new UnauthorizedException('Invalid credentials');
-            }
-        } catch (error) {
-            // If it's already an UnauthorizedException, rethrow it
-            if (error instanceof UnauthorizedException) {
-                throw error;
-            }
-            // For any other error from argon2, treat as invalid credentials
-            throw new UnauthorizedException('Invalid credentials');
-        }
+    try {
+      const validPassword = await argon2.verify(user.passwordHash, password);
 
-        return this.returnSanitizedUserData(user);
-
+      if (!validPassword) {
+        throw new UnauthorizedException('Invalid credentials');
+      }
+    } catch (error) {
+      // If it's already an UnauthorizedException, rethrow it
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      // For any other error from argon2, treat as invalid credentials
+      throw new UnauthorizedException('Invalid credentials');
     }
 
-    private async updateLastLogin(user: User) {
-        return await this.prisma.user.update({
-            where: { id: user.id },
-            data: { lastLogin: new Date() }
-        });
-    }
+    return this.returnSanitizedUserData(user);
+  }
 
-    private async generateAccessToken(payload: TPayload) {
-        return await this.jwtService.signAsync(payload);
-    }
+  private async updateLastLogin(user: User) {
+    return await this.prisma.user.update({
+      where: { id: user.id },
+      data: { lastLogin: new Date() },
+    });
+  }
 
-    public async assignCookie(payload: TPayload, res: Response) {
-        const accessToken = await this.generateAccessToken(payload);
+  private async generateAccessToken(payload: TPayload) {
+    return await this.jwtService.signAsync(payload);
+  }
 
-        res.cookie("accessToken", accessToken, {
-            httpOnly: true, // Prevents client-side JS from reading the cookie (protects against XSS)
-            secure: process.env.NODE_ENV === 'production', // Send over HTTPS only in production
-            sameSite: 'strict', // Protects against CSRF attacks
-            maxAge: 24 * 60 * 60 * 1000,
-        });
-    }
+  public async assignCookie(payload: TPayload, res: Response) {
+    const accessToken = await this.generateAccessToken(payload);
 
-    public async userVerified(user_id: string) {
-        const user = await this.prisma.user.findUnique({
-            where: { id: user_id },
-            include: { person: true },
-        });
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true, // Prevents client-side JS from reading the cookie (protects against XSS)
+      secure: process.env.NODE_ENV === 'production', // Send over HTTPS only in production
+      sameSite: 'strict', // Protects against CSRF attacks
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+  }
 
-        if(!user)
-            throw new ResourceNotFoundException("User not found", "User");
+  public async userVerified(user_id: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: user_id },
+      include: { person: true },
+    });
 
-        return user.isEmailVerified;
-    }
+    if (!user) throw new ResourceNotFoundException('User not found', 'User');
+
+    return user.isEmailVerified;
+  }
 }

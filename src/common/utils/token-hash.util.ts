@@ -11,12 +11,12 @@ import { createHmac, randomBytes } from 'crypto';
  * @param secret - TOKEN_HASH_SECRET from environment. Must not be the JWT secret.
  */
 export function generateApplicationToken(secret: string): {
-    token: string;
-    hash: string;
+  token: string;
+  hash: string;
 } {
-    const token = randomBytes(32).toString('base64url');
-    const hash = computeTokenHash(secret, token);
-    return { token, hash };
+  const token = randomBytes(32).toString('base64url');
+  const hash = computeTokenHash(secret, token);
+  return { token, hash };
 }
 
 /**
@@ -27,5 +27,5 @@ export function generateApplicationToken(secret: string): {
  * @param rawToken - The plain token received from the user.
  */
 export function computeTokenHash(secret: string, rawToken: string): string {
-    return createHmac('sha256', secret).update(rawToken).digest('hex');
+  return createHmac('sha256', secret).update(rawToken).digest('hex');
 }

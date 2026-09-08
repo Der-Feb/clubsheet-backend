@@ -10,15 +10,16 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         transport: {
-          host: configService.get('MAIL_HOST') || "127.0.0.1",
+          host: configService.get('MAIL_HOST') || '127.0.0.1',
           port: configService.get('MAIL_PORT') || 1025,
-          ignoreTLS: true, secure: false
+          ignoreTLS: true,
+          secure: false,
         },
         defaults: { from: `"ClubSheet" <${configService.get('MAIL_FROM')}>` },
       }),
     }),
   ],
   providers: [CommunicationService],
-  exports: [CommunicationService]
+  exports: [CommunicationService],
 })
 export class CommunicationModule {}

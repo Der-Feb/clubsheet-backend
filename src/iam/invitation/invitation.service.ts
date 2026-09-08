@@ -1,45 +1,60 @@
-import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+} from '@nestjs/common';
 import { PrismaService } from '@infrastructure/prisma/prisma.service';
 import { CommunicationService } from '@infrastructure/communication/communication.service';
 import { AuditLogsService } from '@infrastructure/audit-logs/audit-logs.service';
 import { ConfigService } from '@nestjs/config';
-import { ENAuditCategory, ENInvitationStatus, ENMembershipStatus, ENMembershipType } from '@prisma/client';
-import { AcceptInvitationDto, InviteUserDto } from '../membership/membership.dto';
+import {
+  ENAuditCategory,
+  ENInvitationStatus,
+  ENMembershipStatus,
+  ENMembershipType,
+} from '@prisma/client';
+import {
+  AcceptInvitationDto,
+  InviteUserDto,
+} from '../membership/membership.dto';
 import { TCurrentUser } from '@iam/auth/auth.types';
 import { ResourceNotFoundException } from '@common/exceptions/resource-not-found';
-import { generateApplicationToken, computeTokenHash } from '@common/utils/token-hash.util';
+import {
+  generateApplicationToken,
+  computeTokenHash,
+} from '@common/utils/token-hash.util';
 
 @Injectable()
 export class InvitationService {
-    constructor(
-        private readonly prisma: PrismaService,
-        private readonly communicationService: CommunicationService,
-        private readonly auditLogsService: AuditLogsService,
-        private readonly configService: ConfigService,
-    ) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly communicationService: CommunicationService,
+    private readonly auditLogsService: AuditLogsService,
+    private readonly configService: ConfigService,
+  ) {}
 
-    private fiveMinutes = 1000 * 60 * 5;
+  private fiveMinutes = 1000 * 60 * 5;
 
-    /**
-     * Generate a CSPRNG token and its HMAC-SHA-256 hash using TOKEN_HASH_SECRET.
-     * The raw token is sent to the user (in the URL / email code); only the hash
-     * is stored in the database. Validation is a direct unique lookup.
-     */
-    private giveTokenAndHash(): { token: string; hash: string } {
-        const secret = this.configService.getOrThrow<string>('TOKEN_HASH_SECRET');
-        return generateApplicationToken(secret);
-    }
+  /**
+   * Generate a CSPRNG token and its HMAC-SHA-256 hash using TOKEN_HASH_SECRET.
+   * The raw token is sent to the user (in the URL / email code); only the hash
+   * is stored in the database. Validation is a direct unique lookup.
+   */
+  private giveTokenAndHash(): { token: string; hash: string } {
+    const secret = this.configService.getOrThrow<string>('TOKEN_HASH_SECRET');
+    return generateApplicationToken(secret);
+  }
 
-    private inviteUserHtmlBody(
-        inviterName: string, 
-        clubName: string, 
-        inviteUrl: string, 
-        token: string,
-        type: ENMembershipType
-    ): string {
-        const membershipType = type.toLowerCase();
+  private inviteUserHtmlBody(
+    inviterName: string,
+    clubName: string,
+    inviteUrl: string,
+    token: string,
+    type: ENMembershipType,
+  ): string {
+    const membershipType = type.toLowerCase();
 
-        return `
+    return `
             <!DOCTYPE html>
             <html>
             <head>
@@ -110,164 +125,176 @@ export class InvitationService {
             </body>
             </html>
         `;
+  }
+
+  public async inviteUser(inviter: TCurrentUser, inviteData: InviteUserDto) {
+    const { invitee_email, type } = inviteData;
+    const { user_id, person_id } = inviter;
+
+    // check if the invitor has a membership/club:
+    const inviterMembership = await this.prisma.membership.findFirst({
+      where: {
+        status: ENMembershipStatus.ACTIVE,
+        person: {
+          id: person_id,
+          user: { id: user_id },
+        },
+      },
+      include: {
+        club: true,
+        person: { include: { user: true } },
+      },
+    });
+
+    if (!inviterMembership) throw new Error('Invitor does not have a club');
+
+    // find the invitee, if he already has active membership:
+    const inviteeMembership = await this.prisma.membership.findFirst({
+      where: {
+        status: ENMembershipStatus.ACTIVE,
+        person: {
+          user: { email: invitee_email },
+        },
+      },
+      include: {
+        club: true,
+        person: { include: { user: true } },
+      },
+    });
+
+    if (inviteeMembership)
+      throw new ConflictException(
+        `Invitee with email ${invitee_email} already has an active membership in ${inviteeMembership.club.name}`,
+      );
+
+    const { token, hash } = this.giveTokenAndHash();
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL')!;
+    const inviteUrl = `${frontendUrl}/invitation/${token}`;
+
+    // create an invitation
+    await this.prisma.$transaction(async (tx) => {
+      await tx.invitation.create({
+        data: {
+          email: invitee_email,
+          tokenHash: hash,
+          clubId: inviterMembership.clubId,
+          inviterId: inviterMembership.id, // membership id
+          type,
+          expiresAt: new Date(Date.now() + this.fiveMinutes),
+        },
+      });
+
+      // send the email
+      this.communicationService.sendEmail(
+        invitee_email,
+        'ClubSheet Invitation',
+        `Invitation to ${inviterMembership.club.name}`,
+        this.inviteUserHtmlBody(
+          inviterMembership.person.firstName +
+            ' ' +
+            inviterMembership.person.lastName,
+          inviterMembership.club.name,
+          inviteUrl,
+          token,
+          type,
+        ),
+      );
+
+      // create an audit log
+      await this.auditLogsService.createLog({
+        category: ENAuditCategory.AUTH,
+        action: 'invitation',
+        entityType: 'Invitation',
+        metadata: {
+          clubId: inviterMembership.clubId,
+          inviterId: inviterMembership.id,
+          inviteeEmail: invitee_email,
+          type,
+        },
+        createdBy: inviterMembership.person.user?.id,
+        description: `Sent Invitation ${invitee_email} to ${inviterMembership.club.name}`,
+      });
+
+      return {
+        success: true,
+        message: 'Invitation sent successfully',
+      };
+    });
+  }
+
+  public async acceptInvitation(acceptData: AcceptInvitationDto) {
+    const { token } = acceptData;
+
+    // Compute HMAC digest and look up directly — no full-table scan or Argon2 iteration
+    const secret = this.configService.getOrThrow<string>('TOKEN_HASH_SECRET');
+    const tokenHash = computeTokenHash(secret, token);
+
+    const matchedInvitation = await this.prisma.invitation.findUnique({
+      where: { tokenHash },
+    });
+
+    if (
+      !matchedInvitation ||
+      matchedInvitation.status !== ENInvitationStatus.PENDING ||
+      matchedInvitation.expiresAt <= new Date()
+    ) {
+      throw new ResourceNotFoundException(
+        'Invitation token is invalid or expired.',
+        'Invitation',
+      );
     }
 
-    public async inviteUser(inviter: TCurrentUser, inviteData: InviteUserDto) {
-        const { invitee_email, type } = inviteData;
-        const { user_id, person_id } = inviter;
+    const userAlreadyExists = await this.prisma.user.findUnique({
+      where: { email: matchedInvitation.email },
+      include: {
+        person: { include: { memberships: true } },
+      },
+    });
 
-        // check if the invitor has a membership/club:
-        const inviterMembership = await this.prisma.membership.findFirst({
-            where: {
-                status: ENMembershipStatus.ACTIVE,
-                person: {
-                    id: person_id,
-                    user: { id: user_id }
-                }
-            },
-            include: {
-                club: true,
-                person: { include: { user: true } }
-            }
-        });
+    if (!userAlreadyExists)
+      throw new ResourceNotFoundException(
+        'No registered account found for this email. Please register first.',
+        'User',
+      );
 
-        if (!inviterMembership) 
-            throw new Error('Invitor does not have a club');
+    if (!userAlreadyExists.isEmailVerified)
+      throw new BadRequestException(
+        'User account is not verified. Please verify your email first.',
+      );
 
-        // find the invitee, if he already has active membership:
-        const inviteeMembership = await this.prisma.membership.findFirst({
-            where: {
-                status: ENMembershipStatus.ACTIVE,
-                person: {
-                    user: { email: invitee_email }
-                }
-            },
-            include: {
-                club: true,
-                person: { include: { user: true } }
-            }
-        });
+    await this.prisma.$transaction(async (tx) => {
+      await tx.membership.create({
+        data: {
+          clubId: matchedInvitation.clubId,
+          personId: userAlreadyExists.person.id,
+          status: ENMembershipStatus.ACTIVE,
+          joinedAt: new Date(),
+          types: {
+            create: [{ type: matchedInvitation.type }],
+          },
+        },
+      });
 
-        if (inviteeMembership) 
-            throw new ConflictException(`Invitee with email ${invitee_email} already has an active membership in ${inviteeMembership.club.name}`);
+      await tx.invitation.delete({
+        where: { id: matchedInvitation.id },
+      });
+    });
 
-        const { token, hash } = this.giveTokenAndHash();
-        const frontendUrl = this.configService.get<string>('FRONTEND_URL')!;
-        const inviteUrl = `${frontendUrl}/invitation/${token}`;
+    await this.auditLogsService.createLog({
+      category: ENAuditCategory.AUTH,
+      action: 'acceptInvitation',
+      entityType: 'Invitation',
+      metadata: {
+        id: matchedInvitation.id,
+        clubId: matchedInvitation.clubId,
+      },
+      createdBy: userAlreadyExists.id,
+      description: `Accepted Invitation ${matchedInvitation.email}`,
+    });
 
-        // create an invitation
-        await this.prisma.$transaction(async(tx) => {
-            await tx.invitation.create({
-                data: {
-                    email: invitee_email,
-                    tokenHash: hash,
-                    clubId: inviterMembership.clubId,
-                    inviterId: inviterMembership.id, // membership id
-                    type,
-                    expiresAt: new Date(Date.now() + this.fiveMinutes),
-                }
-            });
-
-            // send the email
-            this.communicationService.sendEmail(
-                invitee_email,
-                'ClubSheet Invitation',
-                `Invitation to ${inviterMembership.club.name}`,
-                this.inviteUserHtmlBody(
-                    inviterMembership.person.firstName + ' ' + inviterMembership.person.lastName,
-                    inviterMembership.club.name,
-                    inviteUrl, token, type,
-                )
-            )
-
-            // create an audit log
-            await this.auditLogsService.createLog({
-                category: ENAuditCategory.AUTH,
-                action: "invitation",
-                entityType: "Invitation",
-                metadata: {
-                    clubId: inviterMembership.clubId,
-                    inviterId: inviterMembership.id,
-                    inviteeEmail: invitee_email,
-                    type,
-                },
-                createdBy: inviterMembership.person.user?.id,
-                description: `Sent Invitation ${invitee_email} to ${inviterMembership.club.name}`,
-            });
-
-            return {
-                success: true,
-                message: "Invitation sent successfully",
-            }
-        });
-    }
-
-
-    public async acceptInvitation(acceptData: AcceptInvitationDto) {
-        const { token } = acceptData;
-
-        // Compute HMAC digest and look up directly — no full-table scan or Argon2 iteration
-        const secret = this.configService.getOrThrow<string>('TOKEN_HASH_SECRET');
-        const tokenHash = computeTokenHash(secret, token);
-
-        const matchedInvitation = await this.prisma.invitation.findUnique({
-            where: { tokenHash },
-        });
-
-        if (
-            !matchedInvitation ||
-            matchedInvitation.status !== ENInvitationStatus.PENDING ||
-            matchedInvitation.expiresAt <= new Date()
-        ) {
-            throw new ResourceNotFoundException('Invitation token is invalid or expired.', 'Invitation');
-        }
-
-        const userAlreadyExists = await this.prisma.user.findUnique({
-            where: { email: matchedInvitation.email },
-            include: {
-                person: { include: { memberships: true } }
-            }
-        });
-
-        if (!userAlreadyExists) 
-            throw new ResourceNotFoundException('No registered account found for this email. Please register first.', 'User');
-
-        if (!userAlreadyExists.isEmailVerified)
-            throw new BadRequestException('User account is not verified. Please verify your email first.');
-
-        await this.prisma.$transaction(async (tx) => {
-            await tx.membership.create({
-                data: {
-                    clubId: matchedInvitation!.clubId,
-                    personId: userAlreadyExists.person.id,
-                    status: ENMembershipStatus.ACTIVE,
-                    joinedAt: new Date(),
-                    types: {
-                        create: [{ type: matchedInvitation!.type }]
-                    }
-                }
-            });
-
-            await tx.invitation.delete({ 
-                where: { id: matchedInvitation!.id } 
-            });
-        });
-
-        await this.auditLogsService.createLog({
-            category: ENAuditCategory.AUTH,
-            action: "acceptInvitation",
-            entityType: "Invitation",
-            metadata: {
-                id: matchedInvitation.id,
-                clubId: matchedInvitation.clubId,
-            },
-            createdBy: userAlreadyExists.id,
-            description: `Accepted Invitation ${matchedInvitation.email}`,
-        });
-
-        return {
-            success: true,
-            message: "Invitation accepted successfully",
-        };
-    }
+    return {
+      success: true,
+      message: 'Invitation accepted successfully',
+    };
+  }
 }

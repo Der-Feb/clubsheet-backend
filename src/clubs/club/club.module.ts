@@ -5,11 +5,8 @@ import { ClubController } from './club.controller';
 import { AuthModule } from '@iam/auth/auth.module';
 
 @Module({
-    imports: [
-        AuditLogsModule,
-        AuthModule
-    ],
-    providers: [ClubService],
-    controllers: [ClubController]
+  imports: [AuditLogsModule, AuthModule],
+  providers: [ClubService],
+  controllers: [ClubController],
 })
 export class ClubModule {}

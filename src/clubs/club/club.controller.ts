@@ -12,10 +12,16 @@ import { PassportJwtGuard } from '@common/guards/passport.guard';
 import { EmailVerifiedGuard } from '@common/guards/email-verified.guard';
 import { RequirePermissions } from '@common/decorators/require-permissions.decorator';
 import { CreateClubDto, UpdateClubDto } from './club.dto';
-import { CurrentMembership, CurrentUser } from '@common/decorators/current-user';
+import {
+  CurrentMembership,
+  CurrentUser,
+} from '@common/decorators/current-user';
 import { TPayload } from '@iam/auth/auth.types';
 import { Request } from 'express';
-import { ActiveMembershipGuard, TActiveMembershipPayload } from '@common/guards/active-membership.guard';
+import {
+  ActiveMembershipGuard,
+  TActiveMembershipPayload,
+} from '@common/guards/active-membership.guard';
 import { TUserJWTPayload } from '@iam/auth/strategy/jwt.strategy';
 import { PermissionsGuard } from '@common/guards/permissions.guard';
 
@@ -46,12 +52,8 @@ export class ClubController {
   @RequirePermissions(true, ['CLUB_WRITE'])
   public async updateClub(
     @Body() updateClubDto: UpdateClubDto,
-    @CurrentMembership() currentMembership: TActiveMembershipPayload
+    @CurrentMembership() currentMembership: TActiveMembershipPayload,
   ) {
-    return await this.clubService.updateClub(
-      updateClubDto,
-      currentMembership
-    );
+    return await this.clubService.updateClub(updateClubDto, currentMembership);
   }
-
 }

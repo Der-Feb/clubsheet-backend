@@ -1,6 +1,14 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { PERMISSIONS_KEY, IPermissionsMetadata } from '@common/decorators/require-permissions.decorator';
+import {
+  PERMISSIONS_KEY,
+  IPermissionsMetadata,
+} from '@common/decorators/require-permissions.decorator';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
@@ -13,7 +21,11 @@ export class PermissionsGuard implements CanActivate {
     );
 
     // If endpoint has no @RequirePermissions() decorator, allow access
-    if (!metadata || !metadata.permissions || metadata.permissions.length === 0) {
+    if (
+      !metadata ||
+      !metadata.permissions ||
+      metadata.permissions.length === 0
+    ) {
       return true;
     }
 
@@ -22,11 +34,15 @@ export class PermissionsGuard implements CanActivate {
 
     // Make sure ActiveMembershipGuard ran before this guard
     if (!req.activeMembership) {
-      throw new ForbiddenException('Active membership context required to perform this action');
+      throw new ForbiddenException(
+        'Active membership context required to perform this action',
+      );
     }
 
     // Read the pre-calculated effective permissions calculated by ActiveMembershipGuard
-    const effectivePermissions = new Set<string>(req.effectivePermissions || []);
+    const effectivePermissions = new Set<string>(
+      req.effectivePermissions || [],
+    );
 
     // Evaluate strict (ALL) vs non-strict (AT LEAST ONE)
     const hasPermission = strict
@@ -37,7 +53,9 @@ export class PermissionsGuard implements CanActivate {
       const missingPerms = requiredPermissions
         .filter((code) => !effectivePermissions.has(code))
         .join(', ');
-      throw new ForbiddenException(`Missing required permission(s): ${missingPerms}`);
+      throw new ForbiddenException(
+        `Missing required permission(s): ${missingPerms}`,
+      );
     }
 
     return true;

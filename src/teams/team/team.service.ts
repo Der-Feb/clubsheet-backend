@@ -9,15 +9,19 @@ import { ResourceNotFoundException } from '@common/exceptions/resource-not-found
 export class TeamService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly auditLogsService: AuditLogsService
+    private readonly auditLogsService: AuditLogsService,
   ) {}
 
-  public async createTeam(adminMembership: TActiveMembershipPayload, teamName: string, user_id: string) {
+  public async createTeam(
+    adminMembership: TActiveMembershipPayload,
+    teamName: string,
+    user_id: string,
+  ) {
     const club: Club = adminMembership.club;
     const teamExists = await this.prisma.team.findFirst({
       where: { name: teamName, clubId: club.id },
     });
-    if (teamExists) 
+    if (teamExists)
       throw new BadRequestException(`Team ${teamName} already exists`);
 
     const team = await this.prisma.team.create({
@@ -44,25 +48,33 @@ export class TeamService {
     });
   }
 
-  public async getTeamById(adminMembership: TActiveMembershipPayload, teamId: string) {
+  public async getTeamById(
+    adminMembership: TActiveMembershipPayload,
+    teamId: string,
+  ) {
     const club: Club = adminMembership.club;
     const team = await this.prisma.team.findFirst({
       where: { id: teamId, clubId: club.id },
     });
-    
-    if (!team) 
+
+    if (!team)
       throw new ResourceNotFoundException(`Team ${teamId} not found`, 'Team');
     return team;
   }
 
-  public async updateTeam(adminMembership: TActiveMembershipPayload, teamId: string, teamName: string, user_id: string) {
+  public async updateTeam(
+    adminMembership: TActiveMembershipPayload,
+    teamId: string,
+    teamName: string,
+    user_id: string,
+  ) {
     const club: Club = adminMembership.club;
     const team = await this.prisma.team.update({
       where: { id: teamId, clubId: club.id },
-      data: { name: teamName, },
+      data: { name: teamName },
     });
 
-    if (!team) 
+    if (!team)
       throw new ResourceNotFoundException(`Team ${teamId} not found`, 'Team');
 
     await this.auditLogsService.createLog({

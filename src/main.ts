@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
-import morgan from "morgan";
+import morgan from 'morgan';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import cookieParser from 'cookie-parser';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -9,8 +9,8 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const port = process.env.PORT ?? 3000;
-  const appLogger = new Logger("App");
-  
+  const appLogger = new Logger('App');
+
   app.use(cookieParser());
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalPipes(
@@ -22,16 +22,23 @@ async function bootstrap() {
   );
 
   app.setGlobalPrefix('api');
-  app.use(morgan("combined", { stream: { write: (message: string) => appLogger.log(message.trim()) } }));
+  app.use(
+    morgan('combined', {
+      stream: { write: (message: string) => appLogger.log(message.trim()) },
+    }),
+  );
 
   // configure Swagger UI
   const config = new DocumentBuilder()
     .setDescription('Multi-tenant sports club management API documentation')
-    .setTitle('ClubSheet API').setVersion('1.0').addBearerAuth().build();
+    .setTitle('ClubSheet API')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, documentFactory);
 
   await app.listen(port);
-  appLogger.log("Server started on http://localhost:" + port);
+  appLogger.log('Server started on http://localhost:' + port);
 }
 bootstrap();

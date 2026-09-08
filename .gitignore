@@ -86,3 +86,6 @@ payloads/
 
 ## scripts
 *.sh
+
+## context docs
+docs/

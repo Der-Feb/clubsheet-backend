@@ -1,8 +1,17 @@
-import { Optional } from "@nestjs/common";
-import { ENMembershipType } from "@prisma/client";
-import { ArrayMinSize, IsArray, IsEmail, IsEnum, IsISO31661Alpha2, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { Optional } from '@nestjs/common';
+import { ENMembershipType } from '@prisma/client';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsEmail,
+  IsEnum,
+  IsISO31661Alpha2,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import * as countries from 'i18n-iso-countries';
-import { Transform } from "class-transformer";
+import { Transform } from 'class-transformer';
 
 countries.registerLocale(require('i18n-iso-countries/langs/en.json'));
 
@@ -33,8 +42,11 @@ export class CreateClubDto {
   country!: string;
 
   @IsArray()
-  @ArrayMinSize(1, { message: "At least one membership type must be selected" })
-  @IsEnum(ENMembershipType, { each: true, message: "Each membership type must be of valid value" })
+  @ArrayMinSize(1, { message: 'At least one membership type must be selected' })
+  @IsEnum(ENMembershipType, {
+    each: true,
+    message: 'Each membership type must be of valid value',
+  })
   membershipTypes!: ENMembershipType[];
 }
 

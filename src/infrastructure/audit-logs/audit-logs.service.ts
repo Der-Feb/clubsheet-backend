@@ -3,7 +3,6 @@ import { PrismaService } from '@infrastructure/prisma/prisma.service';
 import { generateAuditDescription } from './audit.utils';
 import { ENAuditCategory, Prisma } from '@prisma/client';
 
-
 @Injectable()
 export class AuditLogsService {
   constructor(private readonly prisma: PrismaService) {}
@@ -17,12 +16,13 @@ export class AuditLogsService {
       createdBy?: string;
       description?: string;
     },
-    tx?: Prisma.TransactionClient
+    tx?: Prisma.TransactionClient,
   ) {
     const { category, action, entityType, metadata, createdBy } = params;
 
-    const description = params.description ?? generateAuditDescription(action, metadata);
-    const db = tx ?? this.prisma
+    const description =
+      params.description ?? generateAuditDescription(action, metadata);
+    const db = tx ?? this.prisma;
 
     return await db.auditLog.create({
       data: {

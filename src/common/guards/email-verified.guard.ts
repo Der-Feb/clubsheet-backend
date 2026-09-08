@@ -1,12 +1,12 @@
 // email-verified.guard.ts
-import { 
-  Injectable, 
-  CanActivate, 
-  ExecutionContext, 
-  ForbiddenException, 
-  UnauthorizedException 
-} from "@nestjs/common";
-import { AuthService } from "@iam/auth/auth.service";
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { AuthService } from '@iam/auth/auth.service';
 
 @Injectable()
 export class EmailVerifiedGuard implements CanActivate {
@@ -16,14 +16,13 @@ export class EmailVerifiedGuard implements CanActivate {
     const request = this.getRequest(context);
     const user = request.user;
 
-    
     if (!user || !user.user_id)
-      throw new UnauthorizedException("User session not found.");
-    
+      throw new UnauthorizedException('User session not found.');
+
     const isVerified = await this.authService.userVerified(user.user_id);
-    
+
     if (!isVerified)
-      throw new ForbiddenException("Your Email address is not verified.");
+      throw new ForbiddenException('Your Email address is not verified.');
 
     return true;
   }

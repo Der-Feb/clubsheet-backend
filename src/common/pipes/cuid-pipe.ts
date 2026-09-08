@@ -1,5 +1,5 @@
-import { BadRequestException, Injectable, PipeTransform } from "@nestjs/common";
-import { isCuid } from "@paralleldrive/cuid2";
+import { BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
+import { isCuid } from '@paralleldrive/cuid2';
 
 @Injectable()
 export class ParseCuidPipe implements PipeTransform<string, string> {

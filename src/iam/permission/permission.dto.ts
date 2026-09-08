@@ -1,4 +1,10 @@
-import { IsEnum, IsNotEmpty, IsString, MaxLength, MinLength } from "class-validator";
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export class GrantPermissionDto {
   @IsNotEmpty()

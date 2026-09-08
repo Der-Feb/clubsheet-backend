@@ -1,4 +1,9 @@
-import { ArgumentsHost, Catch, ExceptionFilter, HttpException } from '@nestjs/common';
+import {
+  ArgumentsHost,
+  Catch,
+  ExceptionFilter,
+  HttpException,
+} from '@nestjs/common';
 import { Request, Response } from 'express';
 import { ResourceNotFoundException } from '../exceptions/resource-not-found';
 
@@ -10,22 +15,23 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const res = ctx.getResponse<Response>();
     const req = ctx.getRequest<Request>();
 
-    const status = exception instanceof HttpException
-      ? exception.getStatus()
-      : 500;
+    const status =
+      exception instanceof HttpException ? exception.getStatus() : 500;
 
-    const exceptionResponse = exception instanceof HttpException
-      ? exception.getResponse()
-      : "Internal Server Error";
+    const exceptionResponse =
+      exception instanceof HttpException
+        ? exception.getResponse()
+        : 'Internal Server Error';
 
     const message =
       typeof exceptionResponse === 'string'
         ? exceptionResponse
         : (exceptionResponse as any).message;
 
-    const resource = exception instanceof ResourceNotFoundException
-      ? exception.resource
-      : undefined;
+    const resource =
+      exception instanceof ResourceNotFoundException
+        ? exception.resource
+        : undefined;
 
     if (res.headersSent) return;
 
