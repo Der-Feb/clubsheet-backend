@@ -2,47 +2,241 @@
 
 ## Project Overview
 
-ClubSheet is a football club management platform designed to manage clubs, teams, memberships, people, users, contracts, and operational workflows.
+ClubSheet is a multi-tenant football club management platform designed to manage:
+
+- Clubs
+- People
+- Users
+- Memberships
+- Roles
+- Permissions
+- Profiles
+- Players
+- Coaches
+- Teams
+- Training
+- Matches
+- Notifications
+- Operational workflows
+
+The backend is responsible for the application's business logic, authorization, persistence, security, and API layer.
 
 The backend is built with:
 
-* **Framework:** NestJS
-* **API Architecture:** REST API for all endpoints
-* **ORM:** Prisma
-* **Database:** PostgreSQL
-* **Migration Tool:** Prisma Migrations
-* **Language:** TypeScript
+- **Framework:** NestJS 11
+- **Language:** TypeScript (strict)
+- **API:** REST API
+- **ORM:** Prisma 7
+- **Database:** PostgreSQL
+- **Database Driver:** `@prisma/adapter-pg`
+- **Authentication:** Passport + JWT
+- **Authentication Transport:** HTTP-only cookies
+- **Password Hashing:** Argon2
+- **Token Hashing:** HMAC-SHA-256
+- **Validation:** `class-validator` + `class-transformer`
+- **Email:** NestJS Mailer + Nodemailer
+- **Scheduling:** `@nestjs/schedule`
+- **Documentation:** Swagger / OpenAPI
+- **Testing:** Jest
+- **Containerization:** Docker
 
-The goal is to maintain a clean, scalable, and maintainable backend suitable for multiple football clubs and organizations.
+The goal is to maintain a clean, scalable, secure, and maintainable backend capable of supporting multiple football clubs while keeping club data isolated.
 
 ---
 
 # Core Development Principles
 
-## 1. Modular Architecture
+## 1. Understand the Existing Architecture First
+
+Before implementing a feature:
+
+1. Inspect the relevant module.
+2. Inspect related Prisma models.
+3. Inspect existing DTOs.
+4. Inspect existing guards and decorators.
+5. Inspect related services.
+6. Inspect existing permission codes.
+7. Inspect audit-log behavior.
+8. Check whether a similar pattern already exists.
+
+Do not introduce a new architectural pattern when an established project pattern already solves the problem.
+
+Prefer extending existing modules over creating duplicate systems.
+
+---
+
+# 2. Modular Architecture
 
 Follow NestJS module boundaries.
 
-Each domain should have its own module:
+Each domain should have its own module.
 
-Example:
+Current structure:
 
-```
+```text
 src/
- ├── auth/
- ├── users/
- ├── persons/
- ├── memberships/
- ├── clubs/
- ├── teams/
- ├── contracts/
- ├── common/
- └── prisma/
+├── iam/
+│   ├── auth/
+│   ├── membership/
+│   ├── invitation/
+│   ├── role/
+│   ├── permission/
+│   ├── profile/
+│   └── user-token/
+│
+├── clubs/
+│   └── club/
+│
+├── teams/
+│   └── team/
+│
+├── players/
+│   └── player/
+│
+├── infrastructure/
+│   ├── prisma/
+│   ├── communication/
+│   └── audit-logs/
+│
+├── tasks/
+└── graphql/
 ```
 
-Avoid creating large shared services that contain unrelated business logic.
+A domain module should normally contain:
 
-Business logic belongs to the domain module responsible for it.
+```text
+module
+controller
+service
+dto
+guards/decorators when required
+```
+
+Avoid large shared services containing unrelated business logic.
+
+Business logic belongs to the domain responsible for it.
+
+---
+
+# Domain Architecture
+
+The fundamental identity model is:
+
+```text
+User
+  ↓
+Person
+  ↓
+Membership
+  ↓
+Club
+```
+
+Operational relationships then extend from the membership/club context:
+
+```text
+Membership
+   ├── Roles
+   ├── Permissions
+   ├── Player
+   └── CoachAssignment
+             ↓
+           Team
+```
+
+Do not collapse these concepts into one model.
+
+---
+
+# Person
+
+`Person` represents a real-world human.
+
+A person may have:
+
+- a User account
+- a Profile
+- a PlayerProfile
+- a CoachProfile
+- Memberships in clubs
+
+A person is not automatically a user.
+
+A person is not automatically a player.
+
+A person is not automatically a coach.
+
+Do not duplicate personal identity information unnecessarily across these models.
+
+---
+
+# User
+
+`User` represents system authentication.
+
+A user:
+
+- authenticates
+- owns credentials
+- has a relationship with a Person
+- can access the system through memberships
+
+Passwords must never be stored in plain text.
+
+User authentication data should remain separate from club-specific membership information.
+
+---
+
+# Membership
+
+Membership represents the relationship between a `Person` and a `Club`.
+
+```text
+Person
+   │
+   └── Membership ─── Club
+```
+
+Membership contains club-specific context such as:
+
+- membership type
+- status
+- roles
+- direct permissions
+- membership lifecycle
+
+A person may have memberships in multiple clubs.
+
+Ending or suspending a membership must not delete the person or user.
+
+Historical membership information should be preserved.
+
+---
+
+# Multi-Tenancy and Club Context
+
+ClubSheet is a multi-tenant system.
+
+Most authenticated club-scoped operations operate within an active club context.
+
+The current active club is selected using:
+
+```text
+x-club-id
+```
+
+The backend must never trust the header by itself.
+
+`ActiveMembershipGuard` must verify that the authenticated person actually has an appropriate membership in the requested club.
+
+Never allow data from one club to be accessed through another club's context.
+
+Every new club-scoped feature must consider:
+
+- How the club is identified.
+- Whether membership is required.
+- Which permissions are required.
+- Whether the queried resource belongs to the active club.
 
 ---
 
@@ -52,43 +246,298 @@ Business logic belongs to the domain module responsible for it.
 
 REST is the primary application API.
 
-Use REST for all endpoints:
+Use REST for:
 
-* Authentication and security workflows
-* Club management
-* Member management
-* Team operations
-* Profiles
-* Reports
-* All application workflows
+- Authentication
+- Club management
+- Membership management
+- Invitations
+- Roles
+- Permissions
+- Profiles
+- Players
+- Teams
+- Training
+- Matches
+- Notifications
+- Reports
+- Other application workflows
 
-Rules:
+Controllers must remain thin.
 
-* Keep controllers thin.
-* Business logic belongs in services.
-* Use DTOs for request/response validation.
-* Avoid putting database queries directly inside controllers.
+Use the following flow:
+
+```text
+HTTP Request
+     ↓
+Guards
+     ↓
+Controller
+     ↓
+Service
+     ↓
+Prisma
+     ↓
+PostgreSQL
+```
+
+Controllers should:
+
+- receive validated DTOs
+- invoke services
+- return appropriate responses
+
+Controllers should not contain business logic or complex database queries.
+
+---
+
+# DTOs and Validation
+
+Use DTOs for request validation.
+
+The application uses global validation with:
+
+```text
+whitelist: true
+forbidNonWhitelisted: true
+transform: true
+```
+
+Do not bypass validation unnecessarily.
+
+Use:
+
+- `class-validator`
+- `class-transformer`
+- project-specific validators such as `IsCuid2`
+- `ParseCuidPipe` for route IDs where appropriate
+
+Reject malformed input at the API boundary.
+
+---
+
+# Authentication
+
+ClubSheet currently uses Passport-based authentication.
+
+Authentication flow:
+
+```text
+Client
+  ↓
+HTTP-only accessToken cookie
+  ↓
+PassportJwtGuard
+  ↓
+JwtStrategy
+  ↓
+req.user
+```
+
+JWT payload currently contains:
+
+```text
+{
+  sub: user_id,
+  person_id
+}
+```
+
+The JWT cookie is:
+
+- HTTP-only
+- SameSite strict
+- Secure in production
+- 24-hour lifetime
+
+Do not expose authentication tokens to frontend JavaScript.
+
+---
+
+# Authentication Responsibilities
+
+Authentication functionality includes:
+
+- registration
+- login
+- logout
+- current-user lookup
+- email verification
+- password reset
+
+Passwords use Argon2.
+
+Application tokens such as verification and password-reset tokens use:
+
+```text
+CSPRNG random token
+        ↓
+HMAC-SHA-256
+        ↓
+hashed token stored in database
+```
+
+Never store raw application tokens.
+
+---
+
+# Authentication Guard Chain
+
+For club-scoped protected endpoints, guard order matters.
+
+The normal chain is:
+
+```text
+PassportJwtGuard
+        ↓
+EmailVerifiedGuard
+        ↓
+ActiveMembershipGuard
+        ↓
+PermissionsGuard
+```
+
+### PassportJwtGuard
+
+Authenticates the user.
+
+Provides:
+
+```text
+req.user
+```
+
+---
+
+### EmailVerifiedGuard
+
+Ensures the user's email has been verified.
+
+---
+
+### ActiveMembershipGuard
+
+Requires:
+
+```text
+x-club-id
+```
+
+It:
+
+1. Identifies the requested club.
+2. Finds the person's membership.
+3. Verifies membership status.
+4. Loads membership context.
+5. Loads roles and permissions.
+6. Calculates effective permissions.
+7. Attaches membership context to the request.
+
+Provides:
+
+```text
+req.activeMembership
+req.effectivePermissions
+```
+
+---
+
+### PermissionsGuard
+
+Reads permission metadata from decorators and checks the effective permissions.
+
+Do not manually reproduce permission checks inside controllers.
+
+---
+
+# Authorization — PBAC
+
+ClubSheet uses **Permission-Based Access Control**, not simple role-only authorization.
+
+The effective permission system is:
+
+```text
+Role Permissions
+      +
+Explicit GRANTS
+      -
+Explicit REVOKES
+      =
+Effective Permissions
+```
+
+Resolution order:
+
+1. Collect permissions from all assigned roles.
+2. Add explicit `GRANT` permissions.
+3. Remove explicit `REVOKE` permissions.
+4. Use the resulting set as the membership's effective permissions.
+
+An explicit revoke therefore overrides a role-derived permission.
+
+---
+
+# Permission Decorators
+
+Use the project's permission decorators.
 
 Example:
 
-```
-Controller
-   ↓
-Service
-   ↓
-Repository / Prisma
-   ↓
-Database
+```typescript
+@RequirePermissions(true, [
+  'CLUB_WRITE',
+  'MEMBERSHIP_WRITE',
+])
 ```
 
-Authentication responsibilities:
+`strict=true` means all required permissions are required.
 
-* JWT issuing
-* Refresh token management
-* Password hashing
-* Session handling
-* Email verification
-* Security workflows
+`strict=false` means at least one required permission is sufficient.
+
+Do not hardcode authorization rules inside services or controllers when the permission system should handle them.
+
+---
+
+# Roles
+
+Roles are club-scoped.
+
+System roles currently include:
+
+```text
+ADMIN
+COACH
+PLAYER
+```
+
+System roles must not be treated the same as custom club roles.
+
+Do not allow normal role-management operations to modify or delete protected system roles.
+
+Role assignment and revocation must respect the membership and club context.
+
+---
+
+# Direct Permissions
+
+Memberships may receive direct permission overrides.
+
+Two actions exist:
+
+```text
+GRANT
+REVOKE
+```
+
+Direct permissions modify the effective permission set after role permissions have been calculated.
+
+When changing permission logic, always consider:
+
+- role permissions
+- grants
+- revokes
+- duplicate records
+- synchronization behavior
 
 ---
 
@@ -96,218 +545,379 @@ Authentication responsibilities:
 
 ## Prisma
 
-Prisma is the only database access layer.
+Prisma is the application's database access layer.
 
-Do not write raw SQL unless absolutely necessary.
+Do not write raw SQL unless there is a strong technical reason that Prisma cannot reasonably support the operation.
 
-All schema changes must happen through:
+Database access belongs in services or dedicated persistence abstractions where appropriate.
 
+Never put Prisma queries directly inside controllers.
+
+---
+
+# Prisma Schema Organization
+
+The schema is modularized.
+
+Current schema areas include:
+
+```text
+prisma/schema/
+├── access.prisma
+├── profile.prisma
+├── pbac.prisma
+├── feature.prisma
+└── system.prisma
 ```
-prisma/schema.prisma
-```
 
-Then create migrations:
+Before changing a model, inspect related models and relationships.
 
-```
+Do not treat an individual schema file as an isolated database.
+
+---
+
+# Database Migrations
+
+Schema changes must be performed through Prisma migrations.
+
+Typical development command:
+
+```bash
 npx prisma migrate dev --name migration_name
 ```
 
-Never manually edit migration files after creation.
+Never manually modify generated migration files unless there is a specific, well-understood reason.
+
+Before changing database structure, consider:
+
+- existing production data
+- foreign keys
+- uniqueness constraints
+- nullable vs required fields
+- historical data
+- migration safety
+- backwards compatibility
 
 ---
 
-## Database Design Principles
+# Transactions
 
-The system separates:
-
-### Person
-
-Represents a real-world human.
-
-Example:
-
-```
-Person
- |
- ├── Player Profile
- ├── Coach Profile
- ├── Staff Profile
- └── User Account
-```
-
-A person can exist without having a login account.
-
----
-
-### User
-
-Represents system access.
-
-A user:
-
-* authenticates
-* receives permissions
-* belongs to roles
-
-Example:
-
-```
-User
- |
- └── Person
-```
-
-Do not duplicate personal information inside User.
-
----
-
-### Membership
-
-Represents the relationship between a person and a club.
-
-Example:
-
-```
-Person
-   |
-Membership
-   |
-Club
-```
-
-Membership has:
-
-* membership type
-* start date
-* end date
-* status
-* contract information
-
-A membership ending should not delete the person or user.
-
-Historical records must remain.
-
----
-
-# Authentication Rules
-
-Passwords:
-
-* Never store plain text passwords.
-* Use secure hashing.
-Tokens:
-
-* Access tokens should be short-lived.
-* Refresh tokens should be stored securely.
-* Refresh token rotation is preferred.
-
----
-
-# Authorization Rules
-
-Authorization should be role-based.
+Use Prisma transactions when multiple database operations must succeed or fail together.
 
 Examples:
 
+```text
+Create club
+  ↓
+Create owner membership
+  ↓
+Assign ADMIN role
+  ↓
+Set createdBy
 ```
-SUPER_ADMIN
-CLUB_ADMIN
-COACH
+
+These operations should remain atomic.
+
+Likewise for workflows such as:
+
+```text
+Accept invitation
+  ↓
+Create membership
+  ↓
+Delete invitation
+```
+
+Do not leave partially completed business operations when atomicity is required.
+
+---
+
+# Historical Data
+
+ClubSheet is intended to preserve organizational history.
+
+Do not casually delete:
+
+- people
+- historical memberships
+- contracts
+- important audit records
+- operational history
+
+Prefer:
+
+- status changes
+- archival
+- soft deletion
+- lifecycle states
+
+when historical information has business value.
+
+---
+
+# Audit Logging
+
+Important business operations should create audit logs.
+
+The project provides:
+
+```text
+AuditLogsService
+```
+
+Audit logs support:
+
+- category
+- action
+- entity type
+- description
+- metadata
+- creator
+
+Audit logging can participate in Prisma transactions.
+
+When implementing an important state-changing workflow, determine whether it should produce an audit record.
+
+Never put passwords, raw authentication tokens, or other secrets into audit metadata.
+
+---
+
+# Error Handling
+
+The application uses a global exception filter.
+
+Errors should be represented using appropriate NestJS exceptions and existing project error conventions.
+
+Do not expose:
+
+- passwords
+- password hashes
+- raw tokens
+- secrets
+- database credentials
+- unnecessary internal stack traces
+
+Use the existing Prisma error handling utilities where applicable.
+
+Common Prisma errors include:
+
+```text
+P2002 → unique constraint
+P2003 → foreign-key constraint
+P2025 → resource not found
+P2014 → relationship violation
+P1000/P1001 → database connection problems
+```
+
+---
+
+# Email and Communication
+
+Email functionality is centralized through:
+
+```text
+CommunicationService
+```
+
+Use the communication service instead of creating independent mailer implementations inside feature modules.
+
+Email workflows include:
+
+- verification emails
+- password reset emails
+- club invitations
+
+Email failures should be handled using the existing exception conventions.
+
+---
+
+# Scheduled Tasks
+
+Scheduled cleanup belongs in the task infrastructure.
+
+Current scheduled operations include:
+
+- expired user-token cleanup
+- expired invitation cleanup
+- deletion of stale unverified accounts
+
+When adding scheduled tasks:
+
+- make the operation idempotent
+- avoid deleting valid records
+- consider transaction boundaries
+- log important failures
+- ensure the task can safely run repeatedly
+
+---
+
+# Feature Architecture
+
+ClubSheet is designed around modular club features.
+
+Current feature concepts include:
+
+```text
+IAM
+CLUB
+TEAM
 PLAYER
-STAFF
-MEMBER
+TRAINING
+MATCH
+SIGNING
+MEDICAL
+FINANCE
 ```
 
-Do not hardcode permissions inside controllers.
+Not every club must necessarily use every feature.
 
-Use guards and decorators.
+When implementing a new major domain, consider:
 
-Example:
-
-```
-@RequirePermission("club.manage")
-```
-
----
-
-# Code Style
-
-## TypeScript
-
-Rules:
-
-* Use strict TypeScript.
-* Avoid `any`.
-* Prefer interfaces/types for contracts.
-* Use dependency injection.
-
-Bad:
-
-```typescript
-const data:any = {};
-```
-
-Good:
-
-```typescript
-const data: UserResponse = {};
-```
-
----
-
-# Naming Conventions
-
-## Files
-
-Use NestJS conventions:
-
-```
-user.module.ts
-user.service.ts
-user.controller.ts
-user.dto.ts
-```
-
----
-
-## Database
-
-Use singular model names:
-
-Good:
-
-```
-User
-Membership
+```text
 Club
+   ↓
+Enabled Features
+   ↓
+Feature Module
+   ↓
+Feature Permissions
+```
+
+Do not tightly couple unrelated feature modules.
+
+---
+
+# Current Domain Direction
+
+The core domain currently follows:
+
+```text
+User
+   ↓
 Person
+   ↓
+Membership
+   ↓
+Club
+   ↓
+Team
 ```
 
-Avoid:
+Players and coaches are specialized operational relationships:
 
+```text
+Person
+   ├── PlayerProfile
+   │      ↓
+   │    Player
+   │      ↓
+   │    Team
+   │
+   └── CoachProfile
+          ↓
+     CoachAssignment
+          ↓
+        Team
 ```
-Users
-Memberships
+
+Keep identity, membership, profile, and operational roles conceptually separate.
+
+---
+
+# Player Architecture
+
+A person should not automatically become a player.
+
+Player functionality should handle:
+
+- player creation
+- player profile
+- player information
+- team assignment
+- team removal
+- player lifecycle
+- player permissions
+
+Player operations must remain club-scoped.
+
+---
+
+# Coach Architecture
+
+Coach information is represented through:
+
+```text
+CoachProfile
+CoachAssignment
+Team
 ```
+
+A coach can be assigned to teams through `CoachAssignment`.
+
+Coach assignment must respect:
+
+- active club context
+- valid person/coach profile
+- valid team
+- authorization
+
+---
+
+# Team Architecture
+
+Teams are club-scoped resources.
+
+Team operations must verify that the team belongs to the active club.
+
+Future team relationships include:
+
+```text
+Team
+├── Players
+├── Coaches
+├── Training
+└── Matches
+```
+
+Never allow a player, coach, or training record from another club to be attached to the current club's team.
 
 ---
 
 # Testing Rules
 
-Every important business rule should have tests.
+Important business rules must have tests.
 
-Priority:
+Testing priority:
 
 1. Authentication
-2. Membership lifecycle
-3. Permissions
-4. Financial/contract logic
-5. Critical workflows
+2. Authorization
+3. Membership lifecycle
+4. Multi-club isolation
+5. Permission resolution
+6. Player/team relationships
+7. Critical business workflows
+8. Scheduled cleanup
+9. Security-sensitive functionality
 
-Testing stack:
+Especially test the PBAC resolution algorithm.
 
-* Jest
-* NestJS testing utilities
+Example:
+
+```text
+ADMIN
+  → CLUB_WRITE ✓
+
+COACH
+  → CLUB_WRITE ✗
+
+COACH + GRANT CLUB_WRITE
+  → CLUB_WRITE ✓
+
+ADMIN + REVOKE CLUB_WRITE
+  → CLUB_WRITE ✗
+```
+
+Also test cross-club isolation.
 
 ---
 
@@ -315,25 +925,43 @@ Testing stack:
 
 Never commit secrets.
 
-Required environment variables:
+Environment variables should contain sensitive configuration such as:
 
-```
+```text
 DATABASE_URL=
 JWT_SECRET=
-JWT_REFRESH_SECRET=
+TOKEN_HASH_SECRET=
 NODE_ENV=
 ```
 
-Production environments must not expose database credentials.
+Email credentials must also remain in environment configuration.
 
-Health checks should confirm:
+Never expose secrets through:
 
+- API responses
+- logs
+- audit metadata
+- Swagger examples
+- error messages
+- committed source code
+
+---
+
+# API Documentation
+
+Swagger/OpenAPI is available through:
+
+```text
+/api/docs
 ```
-Database connected successfully
-API running successfully
-```
 
-without displaying connection strings.
+When adding or significantly changing public endpoints:
+
+- document DTOs
+- document authentication requirements
+- document required headers
+- document response behavior
+- document important error responses
 
 ---
 
@@ -341,22 +969,36 @@ without displaying connection strings.
 
 Commit messages should be descriptive.
 
-Format:
+Use:
 
-```
+```text
 type(scope): description
 ```
 
 Examples:
 
+```text
+feat(player): add player management endpoints
+
+feat(membership): implement membership lifecycle
+
+fix(auth): prevent expired token reuse
+
+fix(permission): correct revoke precedence
+
+refactor(team): separate assignment logic
+
+docs(backend): update architecture guide
+
+test(permission): add PBAC resolution tests
 ```
-feat(auth): add refresh token authentication
 
-feat(membership): create membership domain models
+Avoid vague messages such as:
 
-fix(prisma): resolve migration configuration
-
-docs(project): update architecture documentation
+```text
+fix stuff
+changes
+backend update
 ```
 
 ---
@@ -365,57 +1007,122 @@ docs(project): update architecture documentation
 
 When modifying the project:
 
-1. Understand existing architecture before creating new files.
-2. Prefer extending existing modules over creating duplicates.
-3. Do not introduce new dependencies without justification.
-4. Do not change database models without considering migration impact.
-5. Preserve historical business data.
-6. Avoid breaking API contracts.
-7. Keep controllers thin.
-8. Put business rules inside services.
-9. Add tests for new critical functionality.
-10. Update documentation when architecture changes.
+1. Understand the existing architecture before creating files.
+2. Search for existing implementations before introducing new patterns.
+3. Prefer extending existing modules over creating duplicates.
+4. Keep controllers thin.
+5. Put business logic inside services.
+6. Use DTOs and validation at API boundaries.
+7. Respect the active club context.
+8. Never bypass authorization for convenience.
+9. Never trust `x-club-id` without membership validation.
+10. Do not expose data belonging to another club.
+11. Use Prisma for database access.
+12. Use transactions for atomic business workflows.
+13. Preserve historical business data.
+14. Add audit logging where appropriate.
+15. Do not introduce dependencies without justification.
+16. Do not change database models without considering migration impact.
+17. Do not break existing API contracts without a deliberate migration strategy.
+18. Add tests for important business rules.
+19. Update documentation when architecture changes.
+20. Keep security-sensitive logic centralized.
 
 ---
 
-# Current Architectural Direction
+# Things Agents Must Not Do
 
-The expected domain model follows:
+Do not:
 
-```
-User
- |
-Person
- |
-Membership
- |
-Club
- |
-Team
- |
-Profile Types
-```
+- Put Prisma queries in controllers.
+- Hardcode authorization checks throughout the application.
+- Trust client-provided club IDs without validation.
+- Store plain-text passwords.
+- Store raw verification/reset tokens.
+- Return password hashes.
+- Log authentication secrets.
+- Delete historical organizational data without a clear reason.
+- Create duplicate authentication systems.
+- Create duplicate permission systems.
+- Create feature-specific mailer implementations.
+- Bypass DTO validation.
+- Disable guards just to make an endpoint work.
+- Add dependencies without understanding why they are necessary.
+- Modify migration history casually.
+- Introduce a new architecture without checking existing conventions.
 
-Membership is the connection point between people and clubs.
+---
 
-A person's relationship with a club can end, but:
+# Current Backend Status
 
-* the person remains
-* historical memberships remain
-* previous contracts remain
-* user access can be managed separately
+The following areas are already substantially implemented:
 
-This allows people to move between clubs while preserving identity and history.
+- Authentication
+- User registration/login/logout
+- Email verification
+- Password reset
+- JWT authentication
+- Email verification guard
+- Active membership guard
+- PBAC permission resolution
+- Roles
+- Direct permissions
+- Membership creation/suspension
+- Club registration/update
+- Invitations
+- Profiles
+- Teams
+- Audit-log creation
+- Communication/email infrastructure
+- Scheduled cleanup
+- Prisma infrastructure
+- Swagger/OpenAPI
+
+The following areas are incomplete or planned:
+
+- Player module
+- Player ↔ Team assignment
+- Coach assignment workflows
+- Training module
+- Notification system
+- Audit-log read/list API
+- Club archive endpoint
+- Multi-membership/active-club improvements
+- Refresh-token system
+- GraphQL beyond the basic health check
+- Comprehensive automated tests
+- Feature/module activation system
+- Future Match, Medical, Finance, and Signing modules
+
+When implementing new work, do not assume these modules are already complete.
+
+Inspect the actual implementation first.
 
 ---
 
 # Production Requirements
 
-Before deployment:
+Before production deployment:
 
-* Database migrations must run successfully.
-* Environment variables must be configured.
-* No secrets should exist in code.
-* Logging must not expose sensitive information.
-* Authentication flows must be tested.
-* API health checks must pass.
+- Database migrations must succeed.
+- Environment variables must be configured securely.
+- No secrets may exist in source code.
+- Authentication flows must be tested.
+- Authorization flows must be tested.
+- Cross-club isolation must be tested.
+- Logging must not expose sensitive information.
+- API health checks must pass.
+- Scheduled tasks must be safe and idempotent.
+- Database indexes and constraints must be reviewed.
+- Swagger documentation must reflect the public API.
+- Critical business workflows must have automated tests.
+
+---
+
+# Final Rule
+
+When working on ClubSheet backend:
+
+> **Preserve the domain model, respect the club boundary, keep business logic inside the appropriate module, and extend existing architecture before inventing new architecture.**
+
+When uncertain, inspect the existing implementation and follow its established pattern before making a new one.
