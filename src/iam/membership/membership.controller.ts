@@ -17,7 +17,7 @@ import { PassportJwtGuard } from '@common/guards/passport.guard';
 import { MembershipService } from './membership.service';
 import { Request } from 'express';
 import { RequirePermissions } from '@common/decorators/require-permissions.decorator';
-import { CreateMembershipDto } from './membership.dto';
+import { CreateMembershipDto, MyMembershipResponseDto } from './membership.dto';
 import {
   CurrentMembership,
   CurrentUser,
@@ -38,8 +38,10 @@ export class MembershipController {
   constructor(private readonly membershipService: MembershipService) {}
 
   @Get('my')
-  public async getMyMemberships(@Req() req: Request) {
-    return req.activeMembership;
+  public getMyMemberships(@Req() req: Request) {
+    if (!req.activeMembership) return null;
+
+    return new MyMembershipResponseDto(req.activeMembership, req.effectivePermissions ?? []);
   }
 
   @Post('create')
