@@ -9,9 +9,11 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  Length,
 } from 'class-validator';
 import * as countries from 'i18n-iso-countries';
 import { Transform } from 'class-transformer';
+import { IsImageUrl } from '@common/decorators/is-image-url.decorator';
 
 countries.registerLocale(require('i18n-iso-countries/langs/en.json'));
 
@@ -21,10 +23,14 @@ export class CreateClubDto {
 
   @Optional()
   @IsString()
+  @Length(3, 6, { message: 'Short name must be between 3 and 6 characters' })
   shortName?: string;
 
   @Optional()
   @IsString()
+  @IsImageUrl(['jpg', 'jpeg', 'png', 'webp'], {
+    message: 'Logo must be a valid web image URL (JPG, JPEG, PNG, or WEBP)',
+  })
   logo?: string;
 
   @IsString()
@@ -59,11 +65,15 @@ export class UpdateClubDto {
   @IsOptional()
   @IsString()
   @IsNotEmpty()
+  @Length(3, 6, { message: 'Short name must be between 3 and 6 characters' })
   shortName?: string;
 
   @IsOptional()
   @IsString()
   @IsNotEmpty()
+  @IsImageUrl(['jpg', 'jpeg', 'png', 'webp'], {
+    message: 'Logo must be a valid web image URL (JPG, JPEG, PNG, or WEBP)',
+  })
   logo?: string;
 
   @IsOptional()
