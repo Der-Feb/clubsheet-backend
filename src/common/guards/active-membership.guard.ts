@@ -114,8 +114,6 @@ export class ActiveMembershipGuard implements CanActivate {
       .concat(Array.from(explicitGrants))
       .filter((code) => !explicitDenies.has(code));
 
-    console.log(effectivePermissions);
-
     req.effectivePermissions = effectivePermissions;
     req.activeMembership = activeMembership;
 

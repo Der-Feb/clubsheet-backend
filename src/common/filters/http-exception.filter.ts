@@ -3,12 +3,15 @@ import {
   Catch,
   ExceptionFilter,
   HttpException,
+  Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { ResourceNotFoundException } from '../exceptions/resource-not-found';
 
-@Catch() // 👈 Catching all exceptions
+@Catch() // Catching all exceptions
 export class HttpExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(HttpExceptionFilter.name);
+
   catch(exception: Error, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
 
@@ -34,6 +37,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
         : undefined;
 
     if (res.headersSent) return;
+
+    this.logger.error(exception.message, exception.stack);
 
     res.status(status).json({
       success: false,
