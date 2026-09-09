@@ -3,6 +3,7 @@ import {
   ConflictException,
   Injectable,
   InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
 import { AuditLogsService } from '@infrastructure/audit-logs/audit-logs.service';
 import { PrismaService } from '@infrastructure/prisma/prisma.service';
@@ -16,13 +17,17 @@ import {
 } from '@prisma/client';
 import { parsePrismaError } from '@common/utils/error-handler';
 import { TActiveMembershipPayload } from '@common/guards/active-membership.guard';
+import { CloudinaryService } from '../../media/cloudinary/cloudinary.service';
 
 @Injectable()
 export class ClubService {
   constructor(
     private readonly auditLogsService: AuditLogsService,
     private readonly prisma: PrismaService,
+    private readonly cloudinaryService: CloudinaryService
   ) {}
+
+  private logger = new Logger(ClubService.name);
 
   /**
    * Generates a short abbreviation/acronym from a full club name.
@@ -164,6 +169,13 @@ export class ClubService {
       },
       createdBy: membership.person.user?.id,
     });
+
+    // if the club has a logo, and we updated the logo, delete the old one
+    if (data.logo && membership.club.logo) {
+      this.cloudinaryService.deleteFile(membership.club.logo).catch((err) => {
+        this.logger.error(`Error deleting Cloudinary asset: oldLogo: ${membership.club.logo} \nNew Logo: ${data.logo} \nError: ${err}`);
+      });
+    }
 
     return updatedClub;
   }

@@ -18,7 +18,9 @@ import { CloudinaryUploadInterceptor } from '../../media/cloudinary/cloudinary.i
 @Resolver(() => Club)
 @UseGuards(PassportJwtGuard, EmailVerifiedGuard)
 export class ClubResolver {
-  constructor(private readonly clubService: ClubService) {}
+  constructor(
+    private readonly clubService: ClubService,
+  ) {}
 
   @Query(() => Club, { name: 'myClub', nullable: true })
   @UseGuards(ActiveMembershipGuard)

@@ -51,6 +51,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "cloudinary": "^2.11.0",
+    "cloudinary-build-url": "^0.2.4",
     "cookie-parser": "^1.4.7",
     "google-libphonenumber": "^3.2.46",
     "graphql": "^16.14.2",
