@@ -8,9 +8,10 @@ import { join } from 'path';
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/graphql/schema.graphql'),
-      playground: process.env.ENV === 'dev',
-      context: ({ req }) => ({ request: req }),
+      playground: process.env.ENV === 'dev' || process.env.NODE_ENV !== 'production',
+      context: ({ req, res }) => ({ req, res, request: req }),
     }),
   ],
 })
 export class GraphqlModule {}
+

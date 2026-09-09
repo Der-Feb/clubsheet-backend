@@ -11,6 +11,8 @@ import {
   ENMembershipStatus,
   Prisma,
 } from '@prisma/client';
+import { getRequestFromContext } from '@common/utils/request-context.util';
+
 
 export type TActiveMembershipPayload = Prisma.MembershipGetPayload<{
   include: {
@@ -121,6 +123,7 @@ export class ActiveMembershipGuard implements CanActivate {
   }
 
   private getRequest(context: ExecutionContext) {
-    return context.switchToHttp().getRequest();
+    return getRequestFromContext(context);
   }
 }
+

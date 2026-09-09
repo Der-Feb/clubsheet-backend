@@ -7,6 +7,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { AuthService } from '@iam/auth/auth.service';
+import { getRequestFromContext } from '@common/utils/request-context.util';
 
 @Injectable()
 export class EmailVerifiedGuard implements CanActivate {
@@ -28,6 +29,7 @@ export class EmailVerifiedGuard implements CanActivate {
   }
 
   private getRequest(context: ExecutionContext) {
-    return context.switchToHttp().getRequest();
+    return getRequestFromContext(context);
   }
 }
+

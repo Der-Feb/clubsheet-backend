@@ -9,6 +9,7 @@ import {
   PERMISSIONS_KEY,
   IPermissionsMetadata,
 } from '@common/decorators/require-permissions.decorator';
+import { getRequestFromContext } from '@common/utils/request-context.util';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
@@ -62,6 +63,7 @@ export class PermissionsGuard implements CanActivate {
   }
 
   private getRequest(context: ExecutionContext) {
-    return context.switchToHttp().getRequest();
+    return getRequestFromContext(context);
   }
 }
+

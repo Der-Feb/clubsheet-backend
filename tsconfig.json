@@ -32,7 +32,8 @@
       "@clubs/*": ["./src/clubs/*"],
       "@players/*": ["./src/players/*"],
       "@teams/*": ["./src/teams/*"],
-      "@tasks/*": ["./src/tasks/*"]
+      "@tasks/*": ["./src/tasks/*"],
+      "@generated/*": ["./src/@generated/*"]
     }
   }
 }
