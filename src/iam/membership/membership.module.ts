@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '@iam/auth/auth.module';
 import { MembershipService } from './membership.service';
-import { MembershipController } from './membership.controller';
+import { MembershipResolver } from './membership.resolver';
 
 @Module({
   imports: [AuthModule],
-  providers: [MembershipService],
-  controllers: [MembershipController],
+  providers: [MembershipService, MembershipResolver],
+  exports: [MembershipService],
 })
 export class MembershipModule {}

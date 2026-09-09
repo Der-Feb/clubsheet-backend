@@ -36,7 +36,7 @@ export class MembershipService {
       throw new ResourceNotFoundException(`Club '${clubId}' not found`, 'Club');
 
     try {
-      await this.prisma.$transaction(async (tx) => {
+      return await this.prisma.$transaction(async (tx) => {
         await this.AuditLogService.createLog({
           category: ENAuditCategory.MEMBERSHIP,
           action: 'CREATE',
@@ -57,6 +57,7 @@ export class MembershipService {
     } catch (error) {
       throw new InternalServerErrorException(parsePrismaError(error));
     }
+
   }
 
   public async suspendMembership(membershipId: string, adminUserId: string) {

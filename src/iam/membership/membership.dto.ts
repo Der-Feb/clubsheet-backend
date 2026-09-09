@@ -1,5 +1,6 @@
+import { Field, InputType, ObjectType } from '@nestjs/graphql';
 import { IsCuid2 } from '@common/validators/is-cuid.validator';
-import { ENMembershipType } from '@prisma/client';
+import { ENMembershipStatus, ENMembershipType } from '@prisma/client';
 import { Expose, Transform, Type } from 'class-transformer';
 import {
   IsEmail,
@@ -8,65 +9,93 @@ import {
   IsString,
   MinLength,
 } from 'class-validator';
+import { Club } from '@generated/prisma-nestjs-graphql/club/club.model';
+import '@generated/prisma-nestjs-graphql/prisma/en-membership-type.enum';
+import '@generated/prisma-nestjs-graphql/prisma/en-membership-status.enum';
 
-export class AcceptInvitationDto {
-  @Transform(({ value }) => value.trim())
+@InputType()
+export class AcceptInvitationInput {
+  @Field(() => String)
+  @Transform(({ value }) => value?.trim())
   @IsNotEmpty()
   @IsString()
   @MinLength(5, { message: 'Invalid token' })
-  token: string;
+  token!: string;
 }
 
-export class InviteUserDto {
+export { AcceptInvitationInput as AcceptInvitationDto };
+
+@InputType()
+export class InviteUserInput {
+  @Field(() => String)
   @Transform(({ value }) => value?.trim().toLowerCase())
   @IsEmail()
   @IsNotEmpty()
-  invitee_email: string;
+  invitee_email!: string;
 
+  @Field(() => ENMembershipType)
   @IsEnum(ENMembershipType)
-  type: ENMembershipType;
+  type!: ENMembershipType;
 }
 
-export class CreateMembershipDto {
+export { InviteUserInput as InviteUserDto };
+
+@InputType()
+export class CreateMembershipInput {
+  @Field(() => ENMembershipType)
   @IsEnum(ENMembershipType)
   @IsNotEmpty()
   type!: ENMembershipType;
 
+  @Field(() => String)
   @IsNotEmpty()
   @IsCuid2()
   personId!: string;
 }
 
-export class ClubDto {
-  @Expose() id: string;
-  @Expose() name: string;
-  @Expose() shortName: string | null;
-  @Expose() logo: string | null;
-  @Expose() country: string;
-  @Expose() status: string;
-  @Expose() createdById: string | null;
+export { CreateMembershipInput as CreateMembershipDto };
+
+@ObjectType()
+export class InvitationResponse {
+  @Field(() => Boolean)
+  success!: boolean;
+
+  @Field(() => String)
+  message!: string;
 }
 
-export class MyMembershipResponseDto {
-  @Expose() id: string;
-  @Expose() status: string;
-  @Expose() joinedAt: Date;
-
+@ObjectType()
+export class MyMembershipOutput {
+  @Field(() => String)
   @Expose()
-  @Type(() => ClubDto)
-  club: ClubDto;
+  id!: string;
 
-  // Transforms the complex Prisma roles relation into a simple array of role code strings
+  @Field(() => ENMembershipStatus)
+  @Expose()
+  status!: ENMembershipStatus;
+
+  @Field(() => Date)
+  @Expose()
+  joinedAt!: Date;
+
+  @Field(() => Club, { nullable: true })
+  @Expose()
+  club?: Club;
+
+  @Field(() => [String])
   @Expose()
   @Transform(({ obj }) => obj.roles?.map((r: any) => r.role?.code ?? r) || [])
-  roles: string[];
+  roles!: string[];
 
+  @Field(() => [String])
   @Expose()
-  permissions: string[];
+  permissions!: string[];
 
-  // Accept raw membership payload and effective permissions explicitly
   constructor(membership: any, effectivePermissions: string[]) {
     Object.assign(this, membership);
+    this.roles = membership.roles?.map((r: any) => r.role?.code ?? r) || [];
     this.permissions = effectivePermissions;
   }
 }
+
+export { MyMembershipOutput as MyMembershipResponseDto };
