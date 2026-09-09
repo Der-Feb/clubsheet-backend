@@ -13,7 +13,7 @@ import {
 import * as countries from 'i18n-iso-countries';
 import { Transform } from 'class-transformer';
 import { IsImageUrl } from '@common/decorators/is-image-url.decorator';
-import '@generated/prisma-nestjs-graphql/prisma/en-membership-type.enum';
+import { ENMembershipType as GqlENMembershipType } from '@generated/prisma-nestjs-graphql/prisma/en-membership-type.enum';
 
 countries.registerLocale(require('i18n-iso-countries/langs/en.json'));
 
@@ -53,7 +53,7 @@ export class CreateClubInput {
   @IsISO31661Alpha2({ message: 'Invalid Country' })
   country!: string;
 
-  @Field(() => [ENMembershipType])
+  @Field(() => [GqlENMembershipType])
   @IsArray()
   @ArrayMinSize(1, { message: 'At least one membership type must be selected' })
   @IsEnum(ENMembershipType, {

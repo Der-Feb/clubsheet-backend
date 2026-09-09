@@ -18,10 +18,10 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import '@generated/prisma-nestjs-graphql/prisma/en-player-position.enum';
-import '@generated/prisma-nestjs-graphql/prisma/en-preferred-foot.enum';
-import '@generated/prisma-nestjs-graphql/prisma/en-coach-position.enum';
-import '@generated/prisma-nestjs-graphql/prisma/en-coach-responsibility.enum';
+import { ENPlayerPosition as GqlENPlayerPosition } from '@generated/prisma-nestjs-graphql/prisma/en-player-position.enum';
+import { ENPreferredFoot as GqlENPreferredFoot } from '@generated/prisma-nestjs-graphql/prisma/en-preferred-foot.enum';
+import { ENCoachPosition as GqlENCoachPosition } from '@generated/prisma-nestjs-graphql/prisma/en-coach-position.enum';
+import { ENCoachResponsibility as GqlENCoachResponsibility } from '@generated/prisma-nestjs-graphql/prisma/en-coach-responsibility.enum';
 
 @InputType()
 export class CreateProfileInput {
@@ -46,11 +46,11 @@ export { CreateProfileInput as CreateProfileDto };
 
 @InputType()
 export class CreatePlayerProfileInput {
-  @Field(() => ENPlayerPosition)
+  @Field(() => GqlENPlayerPosition)
   @IsEnum(ENPlayerPosition)
   position!: ENPlayerPosition;
 
-  @Field(() => ENPreferredFoot, { nullable: true })
+  @Field(() => GqlENPreferredFoot, { nullable: true })
   @IsOptional()
   @IsEnum(ENPreferredFoot)
   preferredFoot?: ENPreferredFoot;
@@ -85,13 +85,13 @@ export { CreateCoachProfileInput as CreateCoachProfileDto };
 
 @InputType()
 export class CreateCoachAssignmentInput {
-  @Field(() => [ENCoachResponsibility], { nullable: true })
+  @Field(() => [GqlENCoachResponsibility], { nullable: true })
   @IsOptional()
   @IsArray()
   @IsEnum(ENCoachResponsibility, { each: true })
   responsibilities?: ENCoachResponsibility[];
 
-  @Field(() => ENCoachPosition)
+  @Field(() => GqlENCoachPosition)
   @IsEnum(ENCoachPosition)
   position!: ENCoachPosition;
 }

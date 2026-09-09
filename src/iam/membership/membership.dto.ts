@@ -1,7 +1,7 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
 import { IsCuid2 } from '@common/validators/is-cuid.validator';
 import { ENMembershipStatus, ENMembershipType } from '@prisma/client';
-import { Expose, Transform, Type } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 import {
   IsEmail,
   IsEnum,
@@ -10,8 +10,8 @@ import {
   MinLength,
 } from 'class-validator';
 import { Club } from '@generated/prisma-nestjs-graphql/club/club.model';
-import '@generated/prisma-nestjs-graphql/prisma/en-membership-type.enum';
-import '@generated/prisma-nestjs-graphql/prisma/en-membership-status.enum';
+import { ENMembershipStatus as GqlENMembershipStatus } from '@generated/prisma-nestjs-graphql/prisma/en-membership-status.enum';
+import { ENMembershipType as GqlENMembershipType } from '@generated/prisma-nestjs-graphql/prisma/en-membership-type.enum';
 
 @InputType()
 export class AcceptInvitationInput {
@@ -33,7 +33,7 @@ export class InviteUserInput {
   @IsNotEmpty()
   invitee_email!: string;
 
-  @Field(() => ENMembershipType)
+  @Field(() => GqlENMembershipType)
   @IsEnum(ENMembershipType)
   type!: ENMembershipType;
 }
@@ -42,7 +42,7 @@ export { InviteUserInput as InviteUserDto };
 
 @InputType()
 export class CreateMembershipInput {
-  @Field(() => ENMembershipType)
+  @Field(() => GqlENMembershipType)
   @IsEnum(ENMembershipType)
   @IsNotEmpty()
   type!: ENMembershipType;
@@ -70,7 +70,7 @@ export class MyMembershipOutput {
   @Expose()
   id!: string;
 
-  @Field(() => ENMembershipStatus)
+  @Field(() => GqlENMembershipStatus)
   @Expose()
   status!: ENMembershipStatus;
 

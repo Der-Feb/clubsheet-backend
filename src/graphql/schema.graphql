@@ -2,6 +2,568 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type MembershipType {
+  membershipId: String!
+  type: ENMembershipType!
+  membership: Membership!
+}
+
+enum ENMembershipType {
+  OWNER
+  STAFF
+  ATHLETE
+  GUARDIAN
+  BOARD
+}
+
+type PlayerProfile {
+  id: ID!
+  profileId: String!
+  position: ENPlayerPosition
+  preferredFoot: ENPreferredFoot
+  heightCm: Decimal
+  weightKg: Decimal
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  profile: Profile!
+}
+
+enum ENPlayerPosition {
+  GOALKEEPER
+  DEFENDER
+  MIDFIELDER
+  FORWARD
+}
+
+enum ENPreferredFoot {
+  LEFT
+  RIGHT
+  BOTH
+}
+
+"""An arbitrary-precision Decimal type"""
+scalar Decimal
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type CoachProfile {
+  id: ID!
+  specialization: String
+  license: String
+  profileId: String!
+  profile: Profile!
+}
+
+type Profile {
+  id: ID!
+  personId: String!
+  phoneNumber: String
+  profilePic: String
+  sendEmailNotification: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  person: Person!
+  playerProfile: PlayerProfile
+  coachProfile: CoachProfile
+}
+
+type UserToken {
+  id: ID!
+  type: ENUserTokenType!
+  hash: String!
+  expiresAt: DateTime!
+  usedAt: DateTime
+  status: ENUserTokenStatus!
+  userId: String!
+  createdAt: DateTime!
+  user: User!
+}
+
+enum ENUserTokenType {
+  EMAIL_VERIFICATION
+  CHANGE_PASSWORD
+}
+
+enum ENUserTokenStatus {
+  PENDING
+  DISRUPTED
+}
+
+type Invitation {
+  id: ID!
+  email: String!
+  tokenHash: String!
+  type: ENMembershipType!
+  status: ENInvitationStatus!
+  expiresAt: DateTime!
+  acceptedAt: DateTime
+  clubId: String!
+  inviterId: String!
+  acceptedByUserId: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  club: Club!
+  inviter: Membership!
+  acceptedByUser: User
+}
+
+enum ENInvitationStatus {
+  PENDING
+  DISRUPTED
+}
+
+type NotificationCount {
+  seenBy: Int!
+  sentFor: Int!
+}
+
+type Notification {
+  id: ID!
+  type: ENNotificationType!
+  title: String!
+  description: String!
+  createdBy: String
+  createdAt: DateTime!
+  seenBy: [User!]!
+  sentFor: [User!]!
+  _count: NotificationCount!
+}
+
+enum ENNotificationType {
+  SYSTEM
+  TRAINING
+  MATCH
+}
+
+type UserCount {
+  tokens: Int!
+  acceptedInvitations: Int!
+  seenNotifications: Int!
+  sentNotifications: Int!
+}
+
+type User {
+  id: ID!
+  email: String!
+  passwordHash: String!
+  isEmailVerified: Boolean!
+  lastLogin: DateTime
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  personId: String!
+  person: Person!
+  tokens: [UserToken!]!
+  acceptedInvitations: [Invitation!]!
+  seenNotifications: [Notification!]!
+  sentNotifications: [Notification!]!
+  _count: UserCount!
+}
+
+type PersonCount {
+  memberships: Int!
+}
+
+type Person {
+  id: ID!
+  firstName: String!
+  lastName: String!
+  gender: ENGender!
+  dob: DateTime!
+  nationality: String!
+  profilePicture: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  profile: Profile
+  user: User
+  memberships: [Membership!]!
+  _count: PersonCount!
+}
+
+enum ENGender {
+  MALE
+  FEMALE
+}
+
+type MembershipPermission {
+  id: ID!
+  membershipId: String!
+  permissionId: String!
+  action: ENMembershipPermissionAction!
+  membership: Membership!
+  permission: Permission!
+}
+
+enum ENMembershipPermissionAction {
+  GRANT
+  REVOKE
+}
+
+type PermissionCount {
+  rolePermissions: Int!
+  membershipPermissions: Int!
+}
+
+type Permission {
+  id: ID!
+  code: String!
+  name: String!
+  description: String!
+  module: ENPermissionFeature!
+  action: ENPermissionAction!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  rolePermissions: [RolePermission!]!
+  membershipPermissions: [MembershipPermission!]!
+  _count: PermissionCount!
+}
+
+enum ENPermissionFeature {
+  ACCESS
+  TEAM
+  TRAINING
+  PLAYER
+  MEDICAL
+  FINANCE
+  MATCH
+}
+
+enum ENPermissionAction {
+  CREATE
+  READ
+  WRITE
+  DELETE
+  APPROVE
+  EXPORT
+  ASSIGN
+}
+
+type RolePermission {
+  id: ID!
+  roleId: String!
+  permissionId: String!
+  role: Role!
+  permission: Permission!
+}
+
+type RoleCount {
+  memberships: Int!
+  permissions: Int!
+}
+
+type Role {
+  id: ID!
+  code: String!
+  name: String!
+  description: String!
+  isSystem: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  clubId: String
+  memberships: [MembershipRole!]!
+  permissions: [RolePermission!]!
+  _count: RoleCount!
+}
+
+type MembershipRole {
+  id: ID!
+  membershipId: String!
+  roleId: String!
+  assignedById: String
+  assignedAt: DateTime!
+  membership: Membership!
+  role: Role!
+  assignedBy: Membership
+}
+
+type Training {
+  id: ID!
+  clubId: String!
+  teamId: String!
+  types: [ENTrainingType!]!
+  title: String
+  description: String
+  startsAt: DateTime!
+  endsAt: DateTime!
+  location: String
+  status: ENTrainingStatus!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  club: Club!
+  team: Team!
+}
+
+enum ENTrainingType {
+  PHYSICAL
+  MENTAL
+  TECHNICAL
+  TACTICAL
+}
+
+enum ENTrainingStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+type CoachAssignment {
+  id: ID!
+  membershipId: String!
+  teamId: String!
+  responsabilities: [ENCoachResponsibility!]!
+  position: ENCoachPosition!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  membership: Membership!
+  team: Team!
+}
+
+enum ENCoachResponsibility {
+  TRAINING
+  TACTICS
+  PLAYER_DEVELOPMENT
+  MATCH_ANALYSIS
+  FITNESS
+  GOALKEEPING
+  SCOUTING
+}
+
+enum ENCoachPosition {
+  HEAD_COACH
+  ASSISTANT_COACH
+  GOALKEEPER_COACH
+  FITNESS_COACH
+  TECHNICAL_COACH
+  ANALYST
+}
+
+type TeamCount {
+  trainings: Int!
+  players: Int!
+  coachAssignments: Int!
+}
+
+type Team {
+  id: ID!
+  clubId: String!
+  name: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  club: Club!
+  trainings: [Training!]!
+  players: [Player!]!
+  coachAssignments: [CoachAssignment!]!
+  _count: TeamCount!
+}
+
+type Player {
+  id: ID!
+  membershipId: String!
+  teamId: String!
+  joinedAt: DateTime!
+  leftAt: DateTime
+  membership: Membership!
+  team: Team!
+}
+
+type MembershipCount {
+  types: Int!
+  roles: Int!
+  permissions: Int!
+  assignedRoles: Int!
+  createdClubs: Int!
+  sentInvitations: Int!
+  player: Int!
+  coachAssignments: Int!
+}
+
+type Membership {
+  id: ID!
+  status: ENMembershipStatus!
+  joinedAt: DateTime!
+  endedAt: DateTime
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  personId: String!
+  clubId: String!
+  types: [MembershipType!]!
+  person: Person!
+  club: Club!
+  roles: [MembershipRole!]!
+  permissions: [MembershipPermission!]!
+  assignedRoles: [MembershipRole!]!
+  createdClubs: [Club!]!
+  sentInvitations: [Invitation!]!
+  player: [Player!]!
+  coachAssignments: [CoachAssignment!]!
+  _count: MembershipCount!
+}
+
+enum ENMembershipStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  ENDED
+}
+
+type ClubCount {
+  memberships: Int!
+  invitations: Int!
+  teams: Int!
+  trainings: Int!
+}
+
+type Club {
+  id: ID!
+  name: String!
+  shortName: String
+  logo: String
+  country: String!
+  createdById: String
+  status: ENClubStatus!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  createdBy: Membership
+  memberships: [Membership!]!
+  invitations: [Invitation!]!
+  teams: [Team!]!
+  trainings: [Training!]!
+  _count: ClubCount!
+}
+
+enum ENClubStatus {
+  ACTIVE
+  INACTIVE
+  DELETED
+}
+
+type MyMembershipOutput {
+  id: String!
+  status: ENMembershipStatus!
+  joinedAt: DateTime!
+  club: Club
+  roles: [String!]!
+  permissions: [String!]!
+}
+
+type SyncPermissionsOutput {
+  syncedCount: Int!
+  message: String!
+}
+
 type Query {
   healthCheck: String!
+  myMembership: MyMembershipOutput
+  myPermissions: [MembershipPermission!]!
+  myRoles: [MembershipRole!]!
+  clubRoles: [Role!]!
+  role(roleId: String!): Role!
+  myProfile: Profile
+  profile(personId: String!): Profile
+  myClub: Club
+  myClubs: [Club!]!
+  clubTeams: [Team!]!
+  team(teamId: String!): Team
+}
+
+type Mutation {
+  createMembership(input: CreateMembershipInput!): Membership!
+  suspendMembership(membershipId: String!): Membership!
+  grantPermission(membershipId: String!, input: GrantPermissionInput!): MembershipPermission!
+  syncMembershipWithRolePermissions(membershipId: String!): SyncPermissionsOutput!
+  revokePermission(membershipId: String!, input: RevokePermissionInput!): Boolean!
+  createRole(input: CreateRoleInput!): Role!
+  updateRole(roleId: String!, input: UpdateRoleInput!): Role!
+  deleteRole(roleId: String!): Role!
+  assignRole(membershipId: String!, input: AssignRoleInput!): Boolean!
+  revokeRole(membershipId: String!, input: AssignRoleInput!): Boolean!
+  createProfile(input: CreateProfileInput!): Profile!
+  createPlayerProfile(input: CreatePlayerAndProfileInput!): Profile!
+  createCoachProfile(input: CreateCoachAndProfileInput!): Profile!
+  createClub(input: CreateClubInput!): Club!
+  updateClub(input: UpdateClubInput!): Club!
+  archiveClub(clubId: String!): Boolean!
+  createTeam(input: CreateTeamInput!): Team!
+  updateTeam(teamId: String!, input: UpdateTeamInput!): Team!
+}
+
+input CreateMembershipInput {
+  type: ENMembershipType!
+  personId: String!
+}
+
+input GrantPermissionInput {
+  permissionCode: String!
+}
+
+input RevokePermissionInput {
+  permissionCode: String!
+}
+
+input CreateRoleInput {
+  roleCode: String!
+  name: String!
+  description: String!
+}
+
+input UpdateRoleInput {
+  name: String!
+  description: String!
+}
+
+input AssignRoleInput {
+  roleCode: String!
+}
+
+input CreateProfileInput {
+  phoneNumber: String
+  profilePic: String
+  sendEmailNotification: Boolean = false
+}
+
+input CreatePlayerAndProfileInput {
+  playerProfile: CreatePlayerProfileInput!
+  profile: CreateProfileInput!
+}
+
+input CreatePlayerProfileInput {
+  position: ENPlayerPosition!
+  preferredFoot: ENPreferredFoot
+  heightCm: Float
+  weightKg: Float
+}
+
+input CreateCoachAndProfileInput {
+  coachProfile: CreateCoachProfileInput!
+  profile: CreateProfileInput!
+}
+
+input CreateCoachProfileInput {
+  specialization: String
+  license: String
+}
+
+input CreateClubInput {
+  name: String!
+  shortName: String
+  logo: String
+  country: String!
+  membershipTypes: [ENMembershipType!]!
+}
+
+input UpdateClubInput {
+  name: String
+  shortName: String
+  logo: String
+  country: String
+}
+
+input CreateTeamInput {
+  name: String!
+}
+
+input UpdateTeamInput {
+  name: String!
 }
