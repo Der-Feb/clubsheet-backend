@@ -109,9 +109,19 @@ export class RoleService {
 
     try {
       await this.prisma.$transaction(async (tx) => {
-        await tx.membership.update({
-          where: { id: targetMembershipId },
-          data: { roles: { connect: { id: role.id } } },
+        await tx.membershipRole.upsert({
+          where: {
+            membershipId_roleId: {
+              membershipId: targetMembershipId,
+              roleId: role.id,
+            },
+          },
+          create: {
+            membershipId: targetMembershipId,
+            roleId: role.id,
+            assignedById: adminMembership.id,
+          },
+          update: {},
         });
 
         await this.auditLogsService.createLog(
@@ -129,6 +139,7 @@ export class RoleService {
           tx,
         );
       });
+      return true;
     } catch (error) {
       throw new InternalServerErrorException(parsePrismaError(error));
     }
@@ -161,9 +172,11 @@ export class RoleService {
 
     try {
       await this.prisma.$transaction(async (tx) => {
-        await tx.membership.update({
-          where: { id: targetMembershipId },
-          data: { roles: { disconnect: { id: role.id } } },
+        await tx.membershipRole.deleteMany({
+          where: {
+            membershipId: targetMembershipId,
+            roleId: role.id,
+          },
         });
 
         await this.auditLogsService.createLog(
@@ -181,6 +194,7 @@ export class RoleService {
           tx,
         );
       });
+      return true;
     } catch (error) {
       throw new InternalServerErrorException(parsePrismaError(error));
     }
