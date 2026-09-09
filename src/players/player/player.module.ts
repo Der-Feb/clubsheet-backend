@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
-import { PlayerController } from './player.controller';
 import { PlayerService } from './player.service';
+import { PlayerResolver } from './player.resolver';
+import { AuthModule } from '@iam/auth/auth.module';
 
 @Module({
-  controllers: [PlayerController],
-  providers: [PlayerService],
+  imports: [AuthModule],
+  providers: [PlayerService, PlayerResolver],
+  exports: [PlayerService],
 })
 export class PlayerModule {}
