@@ -17,6 +17,7 @@ import { TeamModule } from './teams/team/team.module';
 import { PlayerModule } from './players/player/player.module';
 import { GraphqlModule } from './graphql/graphql.module';
 import { AppResolver } from './app.resolver';
+import { MediaModule } from './media/media.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { AppResolver } from './app.resolver';
     // Infrastructure modules
     AuditLogsModule,
     CommunicationModule,
+    MediaModule,
   ],
   providers: [TasksService, AppResolver],
 })
