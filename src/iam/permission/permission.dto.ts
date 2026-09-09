@@ -1,12 +1,14 @@
+import { Field, InputType, Int, ObjectType } from '@nestjs/graphql';
 import {
-  IsEnum,
   IsNotEmpty,
   IsString,
   MaxLength,
   MinLength,
 } from 'class-validator';
 
-export class GrantPermissionDto {
+@InputType()
+export class GrantPermissionInput {
+  @Field(() => String)
   @IsNotEmpty()
   @IsString()
   @MinLength(1)
@@ -14,4 +16,18 @@ export class GrantPermissionDto {
   permissionCode!: string;
 }
 
-export class RevokePermissionDto extends GrantPermissionDto {}
+export { GrantPermissionInput as GrantPermissionDto };
+
+@InputType()
+export class RevokePermissionInput extends GrantPermissionInput {}
+
+export { RevokePermissionInput as RevokePermissionDto };
+
+@ObjectType()
+export class SyncPermissionsOutput {
+  @Field(() => Int)
+  syncedCount!: number;
+
+  @Field(() => String)
+  message!: string;
+}
