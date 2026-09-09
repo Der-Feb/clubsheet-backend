@@ -7,7 +7,6 @@ import {
   CreatePlayerProfileDto,
   CreateProfileDto,
 } from './profile.dto';
-import { isInstance } from 'class-validator';
 
 @Injectable()
 export class ProfileService {
@@ -34,6 +33,10 @@ export class ProfileService {
         personId: membership.personId,
         ...profileData,
       },
+      include: {
+        playerProfile: true,
+        coachProfile: true,
+      },
     });
   }
 
@@ -43,24 +46,26 @@ export class ProfileService {
     profileData?: CreateProfileDto,
   ) {
     // check if the player has a profile already
-    const existingProfile = await this.prisma.profile.findFirst({
+    let profile = await this.prisma.profile.findFirst({
       where: { personId: membership.personId },
     });
 
-    if (!profileData || !isInstance(profileData, CreateProfileDto)) {
-      throw new BadRequestException('Profile data is missing or invalid');
+    if (!profile) {
+      if (!profileData) {
+        throw new BadRequestException('Profile data is required');
+      }
+      profile = await this.createProfile(membership, profileData);
     }
 
-    // create the profile first
-    const profile = await this.createProfile(membership, profileData);
-
     // create the player profile
-    return await this.prisma.playerProfile.create({
+    await this.prisma.playerProfile.create({
       data: {
         profileId: profile.id,
         ...playerData,
       },
     });
+
+    return await this.getProfile(membership.personId);
   }
 
   public async createCoachProfile(
@@ -69,24 +74,26 @@ export class ProfileService {
     profileData?: CreateProfileDto,
   ) {
     // check if the coach has a profile already
-    const existingProfile = await this.prisma.profile.findFirst({
+    let profile = await this.prisma.profile.findFirst({
       where: { personId: membership.personId },
     });
 
-    if (!profileData || !isInstance(profileData, CreateProfileDto)) {
-      throw new BadRequestException('Profile data is missing or invalid');
+    if (!profile) {
+      if (!profileData) {
+        throw new BadRequestException('Profile data is required');
+      }
+      profile = await this.createProfile(membership, profileData);
     }
 
-    // create the profile first
-    const profile = await this.createProfile(membership, profileData);
-
     // create the coach profile
-    return await this.prisma.coachProfile.create({
+    await this.prisma.coachProfile.create({
       data: {
         profileId: profile.id,
         ...coachData,
       },
     });
+
+    return await this.getProfile(membership.personId);
   }
 
   public async getProfile(personId: string) {

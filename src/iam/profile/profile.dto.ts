@@ -1,6 +1,5 @@
+import { Field, Float, InputType } from '@nestjs/graphql';
 import { IsPhoneNumberConstraint } from '@common/validators/is-phone-number.validator';
-import { IntersectionType } from '@nestjs/mapped-types';
-import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   ENCoachPosition,
   ENCoachResponsibility,
@@ -10,90 +9,121 @@ import {
 import {
   IsArray,
   IsBoolean,
-  IsDecimal,
   IsEnum,
+  IsNumber,
   IsOptional,
   IsString,
   IsUrl,
   Validate,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+import '@generated/prisma-nestjs-graphql/prisma/en-player-position.enum';
+import '@generated/prisma-nestjs-graphql/prisma/en-preferred-foot.enum';
+import '@generated/prisma-nestjs-graphql/prisma/en-coach-position.enum';
+import '@generated/prisma-nestjs-graphql/prisma/en-coach-responsibility.enum';
 
-export class CreateProfileDto {
-  @ApiPropertyOptional({
-    description: 'International phone number (e.g., +250788000000)',
-    example: '+250788000000',
-  })
+@InputType()
+export class CreateProfileInput {
+  @Field(() => String, { nullable: true })
   @IsOptional()
   @IsString()
   @Validate(IsPhoneNumberConstraint)
   phoneNumber?: string;
 
-  @ApiPropertyOptional({
-    description: 'URL to profile picture',
-    example: 'https://storage.clubsheet.com/profiles/avatar.jpg',
-  })
+  @Field(() => String, { nullable: true })
   @IsOptional()
   @IsUrl()
   profilePic?: string;
 
-  @ApiPropertyOptional({
-    description: 'Receive email notifications',
-    default: false,
-  })
+  @Field(() => Boolean, { nullable: true, defaultValue: false })
   @IsOptional()
   @IsBoolean()
   sendEmailNotification?: boolean;
 }
 
-export class CreatePlayerProfileDto {
-  @IsEnum(() => ENPlayerPosition)
+export { CreateProfileInput as CreateProfileDto };
+
+@InputType()
+export class CreatePlayerProfileInput {
+  @Field(() => ENPlayerPosition)
+  @IsEnum(ENPlayerPosition)
   position!: ENPlayerPosition;
 
+  @Field(() => ENPreferredFoot, { nullable: true })
   @IsOptional()
-  @IsEnum(() => ENPreferredFoot)
+  @IsEnum(ENPreferredFoot)
   preferredFoot?: ENPreferredFoot;
 
+  @Field(() => Float, { nullable: true })
   @IsOptional()
-  @IsDecimal()
+  @IsNumber()
   heightCm?: number;
 
+  @Field(() => Float, { nullable: true })
   @IsOptional()
-  @IsDecimal()
+  @IsNumber()
   weightKg?: number;
 }
 
-export class CreateCoachProfileDto {
+export { CreatePlayerProfileInput as CreatePlayerProfileDto };
+
+@InputType()
+export class CreateCoachProfileInput {
+  @Field(() => String, { nullable: true })
   @IsString()
   @IsOptional()
   specialization?: string;
 
+  @Field(() => String, { nullable: true })
   @IsString()
   @IsOptional()
   license?: string;
 }
 
-export class CreateCoachAssignmentDto {
+export { CreateCoachProfileInput as CreateCoachProfileDto };
+
+@InputType()
+export class CreateCoachAssignmentInput {
+  @Field(() => [ENCoachResponsibility], { nullable: true })
   @IsOptional()
   @IsArray()
-  @IsEnum(() => ENCoachResponsibility, { each: true })
+  @IsEnum(ENCoachResponsibility, { each: true })
   responsibilities?: ENCoachResponsibility[];
 
-  @IsEnum(() => ENCoachPosition)
+  @Field(() => ENCoachPosition)
+  @IsEnum(ENCoachPosition)
   position!: ENCoachPosition;
 }
 
-export class CreatePlayerAndProfileDto {
-  @Validate(CreateProfileDto)
-  playerProfile: CreatePlayerProfileDto;
+export { CreateCoachAssignmentInput as CreateCoachAssignmentDto };
 
-  @Validate(CreateProfileDto)
-  profile: CreateProfileDto;
+@InputType()
+export class CreatePlayerAndProfileInput {
+  @Field(() => CreatePlayerProfileInput)
+  @ValidateNested()
+  @Type(() => CreatePlayerProfileInput)
+  playerProfile!: CreatePlayerProfileInput;
+
+  @Field(() => CreateProfileInput)
+  @ValidateNested()
+  @Type(() => CreateProfileInput)
+  profile!: CreateProfileInput;
 }
 
-export class CreateCoachAndProfileDto {
-  @Validate(CreateProfileDto)
-  coachProfile: CreateCoachProfileDto;
+export { CreatePlayerAndProfileInput as CreatePlayerAndProfileDto };
 
-  @Validate(CreateProfileDto)
-  profile: CreateProfileDto;
+@InputType()
+export class CreateCoachAndProfileInput {
+  @Field(() => CreateCoachProfileInput)
+  @ValidateNested()
+  @Type(() => CreateCoachProfileInput)
+  coachProfile!: CreateCoachProfileInput;
+
+  @Field(() => CreateProfileInput)
+  @ValidateNested()
+  @Type(() => CreateProfileInput)
+  profile!: CreateProfileInput;
 }
+
+export { CreateCoachAndProfileInput as CreateCoachAndProfileDto };
