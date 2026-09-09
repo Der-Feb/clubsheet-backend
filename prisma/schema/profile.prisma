@@ -8,7 +8,7 @@ model Profile {
 
   profilePic    String?        @map("profile_pic")
   playerProfile PlayerProfile?
-  coachProfile CoachProfile?
+  coachProfile  CoachProfile?
 
   sendEmailNotification Boolean @default(false) @map("send_email_notification")
 
@@ -91,8 +91,8 @@ model CoachAssignment {
 model CoachProfile {
   id String @id @default(cuid())
 
-  specialization  String?
-  license         String?
+  specialization String?
+  license        String?
 
   profileId String  @unique @map("profile_id")
   profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)

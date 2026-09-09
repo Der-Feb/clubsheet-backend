@@ -1,15 +1,66 @@
 enum ENFeature {
   IAM // Identity and Access Management
+
+  // core features
   CLUB
   TEAM
   PLAYER
 
+  // aux features
   TRAINING
   MATCH
   SIGNING
   MEDICAL
   FINANCE
 }
+
+model Feature {
+  id String @id @default(cuid())
+
+  code        ENFeature @unique
+  name        String    @db.VarChar(50)
+  description String?
+
+  isCore Boolean @default(false) @map("is_core")
+  isActive Boolean @default(true)  @map("is_active")  // platform-wide kill switch (unreleased/deprecated)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  clubFeatures ClubFeature[]
+
+  @@map("features")
+}
+
+enum ENClubFeatureStatus {
+  ENABLED
+  DISABLED
+}
+
+model ClubFeature {
+  id String @id @default(cuid())
+
+  clubId String @map("club_id")
+  club   Club   @relation(fields: [clubId], references: [id])
+
+  featureId String  @map("feature_id")
+  feature   Feature @relation(fields: [featureId], references: [id])
+
+  status ENClubFeatureStatus @default(DISABLED)
+
+  enabledById String?     @map("enabled_by")
+  enabledBy   Membership? @relation(fields: [enabledById], references: [id])
+  enabledAt   DateTime?   @map("enabled_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([clubId, featureId])
+  @@index([clubId])
+  @@map("club_features")
+}
+
+// -- Training Feature --
 
 enum ENTrainingStatus {
   SCHEDULED
@@ -53,6 +104,7 @@ model Training {
   @@map("trainings")
 }
 
+// -- Player Management Feature --
 model Player {
   id String @id @default(cuid())
 
@@ -69,6 +121,8 @@ model Player {
   @@unique([teamId])
   @@map("players")
 }
+
+// -- Team Management Feature --
 
 model Team {
   id String @id @default(cuid())

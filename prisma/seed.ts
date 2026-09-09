@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { ENPermissionAction, ENPermissionFeature, PrismaClient } from '@prisma/client';
+import { ENPermissionAction, ENFeature, PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 
@@ -10,38 +10,38 @@ const prisma = new PrismaClient({ adapter });
 
 const permissionsData = [
   // CLUB MODULE
-  { code: 'CLUB_READ', name: 'Read Club Information', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.READ, description: 'View club details' },
-  { code: 'CLUB_WRITE', name: 'Write Club Information', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.WRITE, description: 'Write club details' },
-  { code: 'CLUB_DELETE', name: 'Delete Club', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.DELETE, description: 'Delete or archive club' },
+  { code: 'CLUB_READ', name: 'Read Club Information', module: ENFeature.IAM, action: ENPermissionAction.READ, description: 'View club details' },
+  { code: 'CLUB_WRITE', name: 'Write Club Information', module: ENFeature.IAM, action: ENPermissionAction.WRITE, description: 'Write club details' },
+  { code: 'CLUB_DELETE', name: 'Delete Club', module: ENFeature.IAM, action: ENPermissionAction.DELETE, description: 'Delete or archive club' },
 
-  // ACCESS & ROLES MODULE
-  { code: 'PERMISSION_ASSIGN', name: 'Assign Permission', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.ASSIGN, description: 'Assign permissions to members' },
-  { code: 'PERMISSION_READ', name: 'Read Member Information', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.READ, description: 'View permissions details' },
-  { code: 'PERMISSION_REVOKE', name: 'Revoke Permission', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.DELETE, description: 'Revoke permissions to members' },
+  // IAM & ROLES MODULE
+  { code: 'PERMISSION_ASSIGN', name: 'Assign Permission', module: ENFeature.IAM, action: ENPermissionAction.ASSIGN, description: 'Assign permissions to members' },
+  { code: 'PERMISSION_READ', name: 'Read Member Information', module: ENFeature.IAM, action: ENPermissionAction.READ, description: 'View permissions details' },
+  { code: 'PERMISSION_REVOKE', name: 'Revoke Permission', module: ENFeature.IAM, action: ENPermissionAction.DELETE, description: 'Revoke permissions to members' },
   
-  { code: 'ROLE_ASSIGN', name: 'Assign Role', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.ASSIGN, description: 'Assign roles to members' },
-  { code: 'ROLE_READ', name: 'Read Role Information', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.READ, description: 'View roles details' },
-  { code: 'ROLE_REVOKE', name: 'Revoke Roles', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.DELETE, description: 'Revoke roles to members' },
-  { code: 'ROLE_DELETE', name: 'Delete Role', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.DELETE, description: 'Delete or archive non system role' },
+  { code: 'ROLE_ASSIGN', name: 'Assign Role', module: ENFeature.IAM, action: ENPermissionAction.ASSIGN, description: 'Assign roles to members' },
+  { code: 'ROLE_READ', name: 'Read Role Information', module: ENFeature.IAM, action: ENPermissionAction.READ, description: 'View roles details' },
+  { code: 'ROLE_REVOKE', name: 'Revoke Roles', module: ENFeature.IAM, action: ENPermissionAction.DELETE, description: 'Revoke roles to members' },
+  { code: 'ROLE_DELETE', name: 'Delete Role', module: ENFeature.IAM, action: ENPermissionAction.DELETE, description: 'Delete or archive non system role' },
 
   // PLAYER MODULE
-  { code: 'PLAYER_READ', name: 'Read Player Information', module: ENPermissionFeature.PLAYER, action: ENPermissionAction.READ, description: 'View player details' },
-  { code: 'PLAYER_WRITE', name: 'Write Player Information', module: ENPermissionFeature.PLAYER, action: ENPermissionAction.WRITE, description: 'Write player details' },
-  { code: 'PLAYER_ASSIGN', name: 'Move player to team', module: ENPermissionFeature.PLAYER, action: ENPermissionAction.ASSIGN, description: 'Move player to team' },
-  { code: 'PLAYER_UNASSIGN', name: 'Remove player from team', module: ENPermissionFeature.PLAYER, action: ENPermissionAction.DELETE, description: 'Remove player from team' },
+  { code: 'PLAYER_READ', name: 'Read Player Information', module: ENFeature.PLAYER, action: ENPermissionAction.READ, description: 'View player details' },
+  { code: 'PLAYER_WRITE', name: 'Write Player Information', module: ENFeature.PLAYER, action: ENPermissionAction.WRITE, description: 'Write player details' },
+  { code: 'PLAYER_ASSIGN', name: 'Move player to team', module: ENFeature.PLAYER, action: ENPermissionAction.ASSIGN, description: 'Move player to team' },
+  { code: 'PLAYER_UNASSIGN', name: 'Remove player from team', module: ENFeature.PLAYER, action: ENPermissionAction.DELETE, description: 'Remove player from team' },
 
   // MEMBERSHIP MODULE
-  { code: 'MEMBERSHIP_READ', name: 'Read Membership Information', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.READ, description: 'View membership details' },
-  { code: 'MEMBERSHIP_WRITE', name: 'Write Membership Information', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.WRITE, description: 'Write membership details' },
-  { code: 'MEMBERSHIP_SUSPEND', name: 'Suspend Membership', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.DELETE, description: 'Suspend membership' },
+  { code: 'MEMBERSHIP_READ', name: 'Read Membership Information', module: ENFeature.IAM, action: ENPermissionAction.READ, description: 'View membership details' },
+  { code: 'MEMBERSHIP_WRITE', name: 'Write Membership Information', module: ENFeature.IAM, action: ENPermissionAction.WRITE, description: 'Write membership details' },
+  { code: 'MEMBERSHIP_SUSPEND', name: 'Suspend Membership', module: ENFeature.IAM, action: ENPermissionAction.DELETE, description: 'Suspend membership' },
 
   // PROFILE MODULE
-  { code: 'PROFILE_READ', name: 'Read Profile Information', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.READ, description: 'View profile details' },
-  { code: 'PROFILE_WRITE', name: 'Write Profile Information', module: ENPermissionFeature.ACCESS, action: ENPermissionAction.WRITE, description: 'Write profile details' },
+  { code: 'PROFILE_READ', name: 'Read Profile Information', module: ENFeature.IAM, action: ENPermissionAction.READ, description: 'View profile details' },
+  { code: 'PROFILE_WRITE', name: 'Write Profile Information', module: ENFeature.IAM, action: ENPermissionAction.WRITE, description: 'Write profile details' },
 
   // TEAM MODULE
-  { code: 'TEAM_READ', name: 'Read Team Information', module: ENPermissionFeature.TEAM, action: ENPermissionAction.READ, description: 'View team details' },
-  { code: 'TEAM_WRITE', name: 'Write Team Information', module: ENPermissionFeature.TEAM, action: ENPermissionAction.WRITE, description: 'Write team details' },
+  { code: 'TEAM_READ', name: 'Read Team Information', module: ENFeature.TEAM, action: ENPermissionAction.READ, description: 'View team details' },
+  { code: 'TEAM_WRITE', name: 'Write Team Information', module: ENFeature.TEAM, action: ENPermissionAction.WRITE, description: 'Write team details' },
 ];
 
 const roleData = [
@@ -60,6 +60,54 @@ const roleData = [
     description: "Player role with access to player features of the club",
     permissionCodes: ["PLAYER_READ"]
   }
+];
+
+const featuresData = [
+  {
+    code: ENFeature.IAM, name: 'Identity & Access Management',
+    description: 'Authentication, memberships, roles and permissions for the club',
+    isCore: true, isActive: true,
+  },
+  {
+    code: ENFeature.CLUB, name: 'Club Management',
+    description: 'Core club profile, settings and administration',
+    isCore: true, isActive: true,
+  },
+  {
+    code: ENFeature.TEAM, name: 'Team Management',
+    description: 'Manage teams within the club',
+    isCore: true, isActive: true,
+  },
+  {
+    code: ENFeature.PLAYER, name: 'Player Management',
+    description: 'Manage player records and team assignment',
+    isCore: true, isActive: true,
+  },
+  {
+    code: ENFeature.TRAINING, name: 'Training',
+    description: 'Schedule and track training sessions',
+    isCore: false, isActive: true,
+  },
+  {
+    code: ENFeature.MATCH, name: 'Matches', 
+    description: 'Fixtures, results and match management',
+    isCore: false, isActive: true,
+  },
+  {
+    code: ENFeature.SIGNING, name: 'Signings',
+    description: 'Player registrations, transfers and contract signings',
+    isCore: false, isActive: true,
+  },
+  {
+    code: ENFeature.MEDICAL, name: 'Medical',
+    description: 'Medical records, injuries and treatment history',
+    isCore: false, isActive: true,
+  },
+  {
+    code: ENFeature.FINANCE, name: 'Finance',
+    description: 'Club finances, invoicing and payments',
+    isCore: false, isActive: true,
+  },
 ];
 
 async function main() {
@@ -128,6 +176,15 @@ async function main() {
         },
       });
     }
+  }
+
+  console.log("Seeding features ...");
+  for (const feat of featuresData) {
+    await prisma.feature.upsert({
+      where: { code: feat.code },
+      update: { name: feat.name, description: feat.description, isCore: feat.isCore },
+      create: { code: feat.code, name: feat.name, description: feat.description, isCore: feat.isCore },
+    });
   }
 
   console.log("✅ Seeding finished successfully.");

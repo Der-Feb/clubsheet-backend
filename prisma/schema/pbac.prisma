@@ -1,14 +1,3 @@
-
-enum ENPermissionFeature {
-  ACCESS
-  TEAM
-  TRAINING
-  PLAYER
-  MEDICAL
-  FINANCE
-  MATCH
-}
-
 enum ENPermissionAction {
   CREATE
   READ
@@ -26,7 +15,7 @@ model Permission {
   name        String
   description String
 
-  module ENPermissionFeature
+  module ENFeature
   action ENPermissionAction
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -100,8 +89,8 @@ model MembershipPermission {
   membershipId String     @map("membership_id")
   membership   Membership @relation(fields: [membershipId], references: [id])
 
-  permissionId String            @map("permission_id")
-  permission   Permission        @relation(fields: [permissionId], references: [id])
+  permissionId String     @map("permission_id")
+  permission   Permission @relation(fields: [permissionId], references: [id])
 
   action ENMembershipPermissionAction @default(REVOKE)
 

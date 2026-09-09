@@ -18,6 +18,7 @@ import {
 import { parsePrismaError } from '@common/utils/error-handler';
 import { TActiveMembershipPayload } from '@common/guards/active-membership.guard';
 import { CloudinaryService } from '../../media/cloudinary/cloudinary.service';
+import { ENClubFeatureStatus } from '@generated/prisma-nestjs-graphql/prisma/en-club-feature-status.enum';
 
 @Injectable()
 export class ClubService {
@@ -125,6 +126,19 @@ export class ClubService {
           // Role defaults resolve automatically at runtime via ActiveMembershipGuard.
         }
 
+        const features = await tx.feature.findMany({ where: { isActive: true, isCore: true } });
+        if (features.length > 0) {
+          await tx.clubFeature.createMany({
+            data: features.map((feature) => ({
+              clubId: club.id,
+              featureId: feature.id,
+              status: ENClubFeatureStatus.ENABLED,
+              enabledById: feature.isCore ? ownerMembership.id : null,
+              enabledAt: feature.isCore ? new Date() : null,
+            })),
+          });
+        }
+
         const finalizedClub = await tx.club.update({
           where: { id: club.id },
           data: { createdById: ownerMembership.id },
@@ -203,20 +217,27 @@ export class ClubService {
    * @param clubId
    */
   public async archiveClub(clubId: string, membershipId: string) {
-    await this.prisma.club.update({
-      where: {
-        id: clubId,
-      },
-      data: {
-        status: ENClubStatus.DELETED,
-        memberships: {
-          updateMany: {
-            where: {},
-            data: { status: ENMembershipStatus.SUSPENDED },
+    await this.prisma.$transaction(async(tx) => {
+      await tx.club.update({
+        where: {
+          id: clubId,
+        },
+        data: {
+          status: ENClubStatus.DELETED,
+          memberships: {
+            updateMany: {
+              where: {},
+              data: { status: ENMembershipStatus.SUSPENDED },
+            },
           },
         },
-      },
-    });
+      });
+
+      await tx.clubFeature.updateMany({
+        where: { clubId },
+        data: { status: ENClubFeatureStatus.DISABLED },
+      });
+    })
 
     await this.auditLogsService.createLog({
       category: ENAuditCategory.CLUB,

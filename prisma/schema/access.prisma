@@ -116,6 +116,7 @@ model Membership {
 
   player           Player[]
   coachAssignments CoachAssignment[]
+  enabledFeatures  ClubFeature[]
 
   @@index([personId])
   @@index([clubId])
@@ -158,6 +159,8 @@ model Club {
   invitations Invitation[] @relation("ClubInvitations")
   teams       Team[]
   trainings   Training[]
+
+  features ClubFeature[]
 
   @@index([createdById])
   @@map("clubs")

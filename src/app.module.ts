@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
-import { PrismaModule } from './infrastructure/prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
+import { PrismaModule } from './infrastructure/prisma/prisma.module';
 import { AuthModule } from './iam/auth/auth.module';
 import { AuditLogsModule } from './infrastructure/audit-logs/audit-logs.module';
 import { ClubModule } from './clubs/club/club.module';
@@ -8,7 +9,6 @@ import { UserTokenModule } from './iam/user-token/user-token.module';
 import { CommunicationModule } from './infrastructure/communication/communication.module';
 import { MembershipModule } from './iam/membership/membership.module';
 import { InvitationModule } from './iam/invitation/invitation.module';
-import { ScheduleModule } from '@nestjs/schedule';
 import { TasksService } from './tasks/tasks.service';
 import { PermissionModule } from './iam/permission/permission.module';
 import { RoleModule } from './iam/role/role.module';
@@ -18,6 +18,7 @@ import { PlayerModule } from './players/player/player.module';
 import { GraphqlModule } from './graphql/graphql.module';
 import { AppResolver } from './app.resolver';
 import { MediaModule } from './media/media.module';
+import { FeatureModule } from './clubs/feature/feature.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { MediaModule } from './media/media.module';
     AuditLogsModule,
     CommunicationModule,
     MediaModule,
+    FeatureModule,
   ],
   providers: [TasksService, AppResolver],
 })
