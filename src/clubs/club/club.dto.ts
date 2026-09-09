@@ -1,9 +1,8 @@
-import { Optional } from '@nestjs/common';
+import { Field, InputType } from '@nestjs/graphql';
 import { ENMembershipType } from '@prisma/client';
 import {
   ArrayMinSize,
   IsArray,
-  IsEmail,
   IsEnum,
   IsISO31661Alpha2,
   IsNotEmpty,
@@ -14,25 +13,32 @@ import {
 import * as countries from 'i18n-iso-countries';
 import { Transform } from 'class-transformer';
 import { IsImageUrl } from '@common/decorators/is-image-url.decorator';
+import '@generated/prisma-nestjs-graphql/prisma/en-membership-type.enum';
 
 countries.registerLocale(require('i18n-iso-countries/langs/en.json'));
 
-export class CreateClubDto {
+@InputType()
+export class CreateClubInput {
+  @Field(() => String)
   @IsString()
+  @IsNotEmpty()
   name!: string;
 
-  @Optional()
+  @Field(() => String, { nullable: true })
+  @IsOptional()
   @IsString()
   @Length(3, 6, { message: 'Short name must be between 3 and 6 characters' })
   shortName?: string;
 
-  @Optional()
+  @Field(() => String, { nullable: true })
+  @IsOptional()
   @IsString()
   @IsImageUrl(['jpg', 'jpeg', 'png', 'webp'], {
     message: 'Logo must be a valid web image URL (JPG, JPEG, PNG, or WEBP)',
   })
   logo?: string;
 
+  @Field(() => String)
   @IsString()
   @Transform(({ value }) => {
     if (typeof value !== 'string') return value;
@@ -47,6 +53,7 @@ export class CreateClubDto {
   @IsISO31661Alpha2({ message: 'Invalid Country' })
   country!: string;
 
+  @Field(() => [ENMembershipType])
   @IsArray()
   @ArrayMinSize(1, { message: 'At least one membership type must be selected' })
   @IsEnum(ENMembershipType, {
@@ -56,18 +63,24 @@ export class CreateClubDto {
   membershipTypes!: ENMembershipType[];
 }
 
-export class UpdateClubDto {
+export { CreateClubInput as CreateClubDto };
+
+@InputType()
+export class UpdateClubInput {
+  @Field(() => String, { nullable: true })
   @IsOptional()
   @IsString()
   @IsNotEmpty()
   name?: string;
 
+  @Field(() => String, { nullable: true })
   @IsOptional()
   @IsString()
   @IsNotEmpty()
   @Length(3, 6, { message: 'Short name must be between 3 and 6 characters' })
   shortName?: string;
 
+  @Field(() => String, { nullable: true })
   @IsOptional()
   @IsString()
   @IsNotEmpty()
@@ -76,6 +89,7 @@ export class UpdateClubDto {
   })
   logo?: string;
 
+  @Field(() => String, { nullable: true })
   @IsOptional()
   @IsString()
   @Transform(({ value }) => {
@@ -91,3 +105,5 @@ export class UpdateClubDto {
   @IsISO31661Alpha2({ message: 'Invalid Country' })
   country?: string;
 }
+
+export { UpdateClubInput as UpdateClubDto };

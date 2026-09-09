@@ -125,19 +125,7 @@ export class ClubService {
           data: { createdById: ownerMembership.id },
         });
 
-        return {
-          success: true,
-          message: 'Club created successfully with membership',
-          data: {
-            id: club.id,
-            name: club.name,
-            shortName: club.shortName,
-            logo: club.logo,
-            country: club.country,
-            status: club.status,
-            createdById: ownerMembership.id,
-          },
-        };
+        return finalizedClub;
       });
     } catch (error) {
       console.error('Club creation error:', error);
@@ -177,11 +165,7 @@ export class ClubService {
       createdBy: membership.person.user?.id,
     });
 
-    return {
-      success: true,
-      message: 'Club updated successfully',
-      data: updatedClub,
-    };
+    return updatedClub;
   }
 
   public async myClubs(personId: string) {
