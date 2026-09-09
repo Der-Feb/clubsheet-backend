@@ -69,13 +69,16 @@ export class TeamService {
     user_id: string,
   ) {
     const club: Club = adminMembership.club;
-    const team = await this.prisma.team.update({
+    const existingTeam = await this.prisma.team.findFirst({
       where: { id: teamId, clubId: club.id },
+    });
+    if (!existingTeam)
+      throw new ResourceNotFoundException(`Team ${teamId} not found`, 'Team');
+
+    const team = await this.prisma.team.update({
+      where: { id: teamId },
       data: { name: teamName },
     });
-
-    if (!team)
-      throw new ResourceNotFoundException(`Team ${teamId} not found`, 'Team');
 
     await this.auditLogsService.createLog({
       category: ENAuditCategory.TEAM,

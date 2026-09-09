@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common';
-import { TeamController } from './team.controller';
 import { TeamService } from './team.service';
+import { TeamResolver } from './team.resolver';
+import { AuditLogsModule } from '@infrastructure/audit-logs/audit-logs.module';
+import { AuthModule } from '@iam/auth/auth.module';
 
 @Module({
-  controllers: [TeamController],
-  providers: [TeamService],
+  imports: [AuditLogsModule, AuthModule],
+  providers: [TeamService, TeamResolver],
+  exports: [TeamService],
 })
 export class TeamModule {}
