@@ -17,7 +17,7 @@ import {
   AcceptInvitationDto,
   InviteUserDto,
 } from '../membership/membership.dto';
-import { TCurrentUser } from '@iam/auth/auth.types';
+import { TActiveMembershipPayload } from '@common/guards/active-membership.guard';
 import { ResourceNotFoundException } from '@common/exceptions/resource-not-found';
 import {
   generateApplicationToken,
@@ -33,7 +33,7 @@ export class InvitationService {
     private readonly configService: ConfigService,
   ) {}
 
-  private fiveMinutes = 1000 * 60 * 5;
+  private defaultInvitationTtlMs = 1000 * 60 * 60 * 48; // 48 hours
 
   /**
    * Generate a CSPRNG token and its HMAC-SHA-256 hash using TOKEN_HASH_SECRET.
@@ -132,26 +132,18 @@ export class InvitationService {
         `;
   }
 
-  public async inviteUser(inviter: TCurrentUser, inviteData: InviteUserDto) {
+  public async inviteUser(
+    inviterMembership: TActiveMembershipPayload,
+    inviteData: InviteUserDto,
+  ) {
     const { invitee_email, type, teamId } = inviteData;
-    const { user_id, person_id } = inviter;
 
-    // check if the invitor has a membership/club:
-    const inviterMembership = await this.prisma.membership.findFirst({
-      where: {
-        status: ENMembershipStatus.ACTIVE,
-        person: {
-          id: person_id,
-          user: { id: user_id },
-        },
-      },
-      include: {
-        club: true,
-        person: { include: { user: true } },
-      },
-    });
-
-    if (!inviterMembership) throw new Error('Invitor does not have a club');
+    if (!inviterMembership || !inviterMembership.club) {
+      throw new ResourceNotFoundException(
+        'No active club membership found for inviter.',
+        'Membership',
+      );
+    }
 
     // ATHLETE invites must reference a real team belonging to this club.
     let team: { id: string; name: string } | null = null;
@@ -169,7 +161,7 @@ export class InvitationService {
       }
     }
 
-    // find the invitee, if he already has active membership:
+    // find the invitee, if they already have an active membership in this club:
     const inviteeMembership = await this.prisma.membership.findFirst({
       where: {
         status: ENMembershipStatus.ACTIVE,
@@ -203,7 +195,7 @@ export class InvitationService {
           inviterId: inviterMembership.id, // membership id
           type,
           teamId: team?.id ?? null,
-          expiresAt: new Date(Date.now() + this.fiveMinutes),
+          expiresAt: new Date(Date.now() + this.defaultInvitationTtlMs),
         },
       });
 
@@ -323,19 +315,23 @@ export class InvitationService {
       await tx.invitation.delete({
         where: { id: matchedInvitation.id },
       });
-    });
 
-    await this.auditLogsService.createLog({
-      category: ENAuditCategory.AUTH,
-      action: 'acceptInvitation',
-      entityType: 'Invitation',
-      metadata: {
-        id: matchedInvitation.id,
-        clubId: matchedInvitation.clubId,
-        teamId: matchedInvitation.teamId ?? null,
-      },
-      createdBy: userAlreadyExists.id,
-      description: `Accepted Invitation ${matchedInvitation.email}`,
+      await this.auditLogsService.createLog(
+        {
+          category: ENAuditCategory.AUTH,
+          action: 'acceptInvitation',
+          entityType: 'Invitation',
+          metadata: {
+            id: matchedInvitation.id,
+            membershipId: newMembership.id,
+            clubId: matchedInvitation.clubId,
+            teamId: matchedInvitation.teamId ?? null,
+          },
+          createdBy: userAlreadyExists.id,
+          description: `Accepted Invitation ${matchedInvitation.email}`,
+        },
+        tx,
+      );
     });
 
     return {

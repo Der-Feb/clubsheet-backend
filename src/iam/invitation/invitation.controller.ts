@@ -6,11 +6,13 @@ import {
 } from '../membership/membership.dto';
 import { PassportJwtGuard } from '@common/guards/passport.guard';
 import { EmailVerifiedGuard } from '@common/guards/email-verified.guard';
-import { ActiveMembershipGuard } from '@common/guards/active-membership.guard';
+import {
+  ActiveMembershipGuard,
+  TActiveMembershipPayload,
+} from '@common/guards/active-membership.guard';
 import { PermissionsGuard } from '@common/guards/permissions.guard';
 import { RequirePermissions } from '@common/decorators/require-permissions.decorator';
-import { CurrentUser } from '@common/decorators/current-user';
-import { TUserJWTPayload } from '../auth/strategy/jwt.strategy';
+import { CurrentMembership } from '@common/decorators/current-user';
 
 @Controller('invitation')
 export class InvitationController {
@@ -25,10 +27,10 @@ export class InvitationController {
   )
   @RequirePermissions(true, ['MEMBERSHIP_WRITE'])
   async sendInvitation(
-    @CurrentUser() currentUser: TUserJWTPayload,
+    @CurrentMembership() activeMembership: TActiveMembershipPayload,
     @Body() inviteData: InviteUserDto,
   ) {
-    return this.invitationService.inviteUser(currentUser, inviteData);
+    return this.invitationService.inviteUser(activeMembership, inviteData);
   }
 
   @Post('accept')
