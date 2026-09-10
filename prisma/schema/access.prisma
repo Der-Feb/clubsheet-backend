@@ -77,7 +77,6 @@ model UserToken {
 enum ENMembershipStatus {
   PENDING
   ACTIVE
-  SUSPENDED
   ENDED
 }
 
@@ -161,6 +160,7 @@ model Club {
   trainings   Training[]
 
   features ClubFeature[]
+  roles    Role[]
 
   @@index([createdById])
   @@map("clubs")

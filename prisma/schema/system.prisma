@@ -39,7 +39,7 @@ model Notification {
 
   type ENNotificationType @default(SYSTEM)
 
-  title       String @db.VarChar(20)
+  title       String @db.VarChar(100)
   description String @db.VarChar(100)
 
   createdBy String? @default("system") @map("created_by")

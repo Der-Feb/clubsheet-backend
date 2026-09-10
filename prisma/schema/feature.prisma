@@ -117,8 +117,7 @@ model Player {
   joinedAt DateTime  @default(now()) @map("joined_at")
   leftAt   DateTime? @map("left_at")
 
-  @@unique([membershipId])
-  @@unique([teamId])
+  @@unique([membershipId, teamId])
   @@map("players")
 }
 

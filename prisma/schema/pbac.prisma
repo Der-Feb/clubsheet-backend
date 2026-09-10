@@ -40,6 +40,7 @@ model Role {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   clubId String? @map("club_id")
+  club   Club?   @relation(fields: [clubId], references: [id])
 
   memberships MembershipRole[]
   permissions RolePermission[]
