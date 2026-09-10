@@ -49,10 +49,10 @@ export { InviteUserInput as InviteUserDto };
 
 @InputType()
 export class CreateMembershipInput {
-  @Field(() => GqlENMembershipType)
-  @IsEnum(ENMembershipType)
+  @Field(() => [GqlENMembershipType])
+  @IsEnum(ENMembershipType, { each: true })
   @IsNotEmpty()
-  type!: ENMembershipType;
+  types!: ENMembershipType[];
 
   @Field(() => String)
   @IsNotEmpty()

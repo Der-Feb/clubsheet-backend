@@ -51,19 +51,19 @@ export class MembershipResolver {
     return this.membershipService.createMembership(
       input.personId,
       currentMembership.clubId,
-      input.type,
+      input.types,
     );
   }
 
-  @Mutation(() => Membership, { name: 'suspendMembership' })
-  @RequirePermissions(true, ['MEMBERSHIP_SUSPEND'])
-  async suspendMembership(
+  @Mutation(() => Membership, { name: 'endMembership' })
+  @RequirePermissions(true, ['MEMBERSHIP_SUSPEND', 'MEMBERSHIP_WRITE'])
+  async endMembership(
     @Args('membershipId') membershipId: string,
-    @CurrentUser() currentUser: TUserJWTPayload,
+    @CurrentMembership() currentMembership: TActiveMembershipPayload,
   ) {
-    return this.membershipService.suspendMembership(
+    return this.membershipService.endMembership(
       membershipId,
-      currentUser.user_id,
+      currentMembership,
     );
   }
 }
