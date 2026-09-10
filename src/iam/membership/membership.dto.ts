@@ -8,6 +8,7 @@ import {
   IsNotEmpty,
   IsString,
   MinLength,
+  ValidateIf,
 } from 'class-validator';
 import { Club } from '@generated/prisma-nestjs-graphql/club/club.model';
 import { ENMembershipStatus as GqlENMembershipStatus } from '@generated/prisma-nestjs-graphql/prisma/en-membership-status.enum';
@@ -36,6 +37,12 @@ export class InviteUserInput {
   @Field(() => GqlENMembershipType)
   @IsEnum(ENMembershipType)
   type!: ENMembershipType;
+
+  @Field(() => String, { nullable: true })
+  @ValidateIf((o) => o.type === ENMembershipType.ATHLETE)
+  @IsNotEmpty({ message: 'teamId is required when inviting an athlete' })
+  @IsCuid2()
+  teamId?: string;
 }
 
 export { InviteUserInput as InviteUserDto };

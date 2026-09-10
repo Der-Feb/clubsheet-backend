@@ -51,8 +51,13 @@ export class InvitationService {
     inviteUrl: string,
     token: string,
     type: ENMembershipType,
+    teamName: string | null = null,
   ): string {
     const membershipType = type.toLowerCase();
+
+    const roleDescription = teamName
+      ? `as a <strong>${membershipType}</strong> on team <strong>${teamName}</strong>`
+      : `as a <strong>${membershipType}</strong>`;
 
     return `
             <!DOCTYPE html>
@@ -81,7 +86,7 @@ export class InvitationService {
                                             Hello! 
                                         </p>
                                         <p style="margin: 0 0 24px 0; color: #4b5563; font-size: 15px; line-height: 1.6; text-align: left;">
-                                            <strong>${inviterName}</strong> has invited you to join <strong>${clubName}</strong> as a <strong>${membershipType}</strong> on ClubSheet. Click the button below to accept your invitation and set up your account:
+                                            <strong>${inviterName}</strong> has invited you to join <strong>${clubName}</strong> ${roleDescription} on ClubSheet. Click the button below to accept your invitation and set up your account:
                                         </p>
 
                                         <!-- Call To Action Button -->
@@ -128,7 +133,7 @@ export class InvitationService {
   }
 
   public async inviteUser(inviter: TCurrentUser, inviteData: InviteUserDto) {
-    const { invitee_email, type } = inviteData;
+    const { invitee_email, type, teamId } = inviteData;
     const { user_id, person_id } = inviter;
 
     // check if the invitor has a membership/club:
@@ -148,10 +153,27 @@ export class InvitationService {
 
     if (!inviterMembership) throw new Error('Invitor does not have a club');
 
+    // ATHLETE invites must reference a real team belonging to this club.
+    let team: { id: string; name: string } | null = null;
+
+    if (type === ENMembershipType.ATHLETE) {
+      team = await this.prisma.team.findFirst({
+        where: { id: teamId, clubId: inviterMembership.clubId },
+        select: { id: true, name: true },
+      });
+
+      if (!team) {
+        throw new BadRequestException(
+          'This club has no team matching the provided teamId. Create a team before inviting a player.',
+        );
+      }
+    }
+
     // find the invitee, if he already has active membership:
     const inviteeMembership = await this.prisma.membership.findFirst({
       where: {
         status: ENMembershipStatus.ACTIVE,
+        clubId: inviterMembership.clubId,
         person: {
           user: { email: invitee_email },
         },
@@ -172,7 +194,7 @@ export class InvitationService {
     const inviteUrl = `${frontendUrl}/invitation/${token}`;
 
     // create an invitation
-    await this.prisma.$transaction(async (tx) => {
+    return await this.prisma.$transaction(async (tx) => {
       await tx.invitation.create({
         data: {
           email: invitee_email,
@@ -180,6 +202,7 @@ export class InvitationService {
           clubId: inviterMembership.clubId,
           inviterId: inviterMembership.id, // membership id
           type,
+          teamId: team?.id ?? null,
           expiresAt: new Date(Date.now() + this.fiveMinutes),
         },
       });
@@ -197,23 +220,28 @@ export class InvitationService {
           inviteUrl,
           token,
           type,
+          team?.name ?? null,
         ),
       );
 
       // create an audit log
-      await this.auditLogsService.createLog({
-        category: ENAuditCategory.AUTH,
-        action: 'invitation',
-        entityType: 'Invitation',
-        metadata: {
-          clubId: inviterMembership.clubId,
-          inviterId: inviterMembership.id,
-          inviteeEmail: invitee_email,
-          type,
+      await this.auditLogsService.createLog(
+        {
+          category: ENAuditCategory.AUTH,
+          action: 'invitation',
+          entityType: 'Invitation',
+          metadata: {
+            clubId: inviterMembership.clubId,
+            inviterId: inviterMembership.id,
+            inviteeEmail: invitee_email,
+            type,
+            teamId: team?.id ?? null,
+          },
+          createdBy: inviterMembership.person.user?.id,
+          description: `Sent Invitation ${invitee_email} to ${inviterMembership.club.name}`,
         },
-        createdBy: inviterMembership.person.user?.id,
-        description: `Sent Invitation ${invitee_email} to ${inviterMembership.club.name}`,
-      });
+        tx,
+      );
 
       return {
         success: true,
@@ -263,7 +291,7 @@ export class InvitationService {
       );
 
     await this.prisma.$transaction(async (tx) => {
-      await tx.membership.create({
+      const newMembership = await tx.membership.create({
         data: {
           clubId: matchedInvitation.clubId,
           personId: userAlreadyExists.person.id,
@@ -274,6 +302,23 @@ export class InvitationService {
           },
         },
       });
+
+      // ATHLETE invitations must carry a team assignment; create the Player record.
+      if (matchedInvitation.type === ENMembershipType.ATHLETE) {
+        if (!matchedInvitation.teamId) {
+          throw new BadRequestException(
+            'Athlete invitation is missing a team assignment.',
+          );
+        }
+
+        await tx.player.create({
+          data: {
+            membershipId: newMembership.id,
+            teamId: matchedInvitation.teamId,
+            joinedAt: new Date(),
+          },
+        });
+      }
 
       await tx.invitation.delete({
         where: { id: matchedInvitation.id },
@@ -287,6 +332,7 @@ export class InvitationService {
       metadata: {
         id: matchedInvitation.id,
         clubId: matchedInvitation.clubId,
+        teamId: matchedInvitation.teamId ?? null,
       },
       createdBy: userAlreadyExists.id,
       description: `Accepted Invitation ${matchedInvitation.email}`,

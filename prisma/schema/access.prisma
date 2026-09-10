@@ -182,6 +182,8 @@ model Invitation {
 
   status ENInvitationStatus @default(PENDING)
 
+  teamId String? @map("team_id")   // plain string, no FK — see note above
+
   expiresAt  DateTime  @map("expires_at")
   acceptedAt DateTime? @map("accepted_at")
 
