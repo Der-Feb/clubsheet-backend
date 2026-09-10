@@ -217,7 +217,7 @@ export class ClubService {
    * @param clubId
    */
   public async archiveClub(clubId: string, membershipId: string) {
-    await this.prisma.$transaction(async(tx) => {
+    await this.prisma.$transaction(async (tx) => {
       await tx.club.update({
         where: {
           id: clubId,
@@ -226,8 +226,15 @@ export class ClubService {
           status: ENClubStatus.DELETED,
           memberships: {
             updateMany: {
-              where: {},
-              data: { status: ENMembershipStatus.SUSPENDED },
+              where: {
+                status: {
+                  in: [ENMembershipStatus.ACTIVE, ENMembershipStatus.PENDING],
+                },
+              },
+              data: {
+                status: ENMembershipStatus.ENDED,
+                endedAt: new Date(),
+              },
             },
           },
         },
@@ -237,13 +244,16 @@ export class ClubService {
         where: { clubId },
         data: { status: ENClubFeatureStatus.DISABLED },
       });
-    })
 
-    await this.auditLogsService.createLog({
-      category: ENAuditCategory.CLUB,
-      action: 'clubArchive',
-      metadata: { clubId, membershipId },
-      entityType: 'club',
+      await this.auditLogsService.createLog(
+        {
+          category: ENAuditCategory.CLUB,
+          action: 'clubArchive',
+          metadata: { clubId, membershipId },
+          entityType: 'club',
+        },
+        tx,
+      );
     });
   }
 
