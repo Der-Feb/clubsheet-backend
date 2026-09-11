@@ -1,5 +1,6 @@
 import { ResourceNotFoundException } from '@common/exceptions/resource-not-found';
 import { TActiveMembershipPayload } from '@common/guards/active-membership.guard';
+import { TimezoneService } from '@common/timezone/timezone.service';
 import { AuditLogsService } from '@infrastructure/audit-logs/audit-logs.service';
 import { PrismaService } from '@infrastructure/prisma/prisma.service';
 import { ForbiddenException, Injectable } from '@nestjs/common';
@@ -10,6 +11,7 @@ export class FeatureService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditLogService: AuditLogsService,
+    private readonly timezoneService: TimezoneService,
   ) {}
 
   public async getFeatures() {
@@ -56,7 +58,7 @@ export class FeatureService {
         where: { id: clubFeature.id },
         data: {
           status: ENClubFeatureStatus.ENABLED,
-          enabledAt: new Date(),
+          enabledAt: this.timezoneService.nowUtc(),
           enabledById: activeMembership.id,
         },
       });

@@ -19,13 +19,15 @@ import { parsePrismaError } from '@common/utils/error-handler';
 import { TActiveMembershipPayload } from '@common/guards/active-membership.guard';
 import { CloudinaryService } from '../../media/cloudinary/cloudinary.service';
 import { ENClubFeatureStatus } from '@generated/prisma-nestjs-graphql/prisma/en-club-feature-status.enum';
+import { TimezoneService } from '@common/timezone/timezone.service';
 
 @Injectable()
 export class ClubService {
   constructor(
     private readonly auditLogsService: AuditLogsService,
     private readonly prisma: PrismaService,
-    private readonly cloudinaryService: CloudinaryService
+    private readonly cloudinaryService: CloudinaryService,
+    private readonly timezoneService: TimezoneService,
   ) {}
 
   private logger = new Logger(ClubService.name);
@@ -70,7 +72,11 @@ export class ClubService {
     return singleWord.slice(0, 3).toUpperCase();
   }
 
-  public async createClub(createClubDto: CreateClubDto, userId: string) {
+  public async createClub(
+    createClubDto: CreateClubDto,
+    userId: string,
+    timezone?: string,
+  ) {
     try {
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
@@ -80,6 +86,8 @@ export class ClubService {
       if (!user) throw new ResourceNotFoundException('User not found', 'user');
 
       return await this.prisma.$transaction(async (tx) => {
+        const now = this.timezoneService.nowUtc();
+
         const club = await tx.club.create({
           data: {
             name: createClubDto.name,
@@ -88,6 +96,7 @@ export class ClubService {
               this.generateShortName(createClubDto.name),
             logo: createClubDto.logo,
             country: createClubDto.country,
+            timezone: this.timezoneService.resolve(createClubDto.timezone ?? timezone, undefined),
             status: ENClubStatus.ACTIVE,
           },
         });
@@ -100,7 +109,7 @@ export class ClubService {
         const ownerMembership = await tx.membership.create({
           data: {
             clubId: club.id,
-            joinedAt: new Date(),
+            joinedAt: now,
             personId: user.person.id,
             types: {
               create: uniqueTypes.map((type) => ({ type: type })),
@@ -134,7 +143,7 @@ export class ClubService {
               featureId: feature.id,
               status: ENClubFeatureStatus.ENABLED,
               enabledById: feature.isCore ? ownerMembership.id : null,
-              enabledAt: feature.isCore ? new Date() : null,
+              enabledAt: feature.isCore ? now : null,
             })),
           });
         }
@@ -155,6 +164,7 @@ export class ClubService {
   public async updateClub(
     data: UpdateClubDto,
     membership: TActiveMembershipPayload,
+    timezone?: string,
   ) {
     // 1. Find the active membership for this user/person and include the club
     if (!membership || !membership.club)
@@ -166,7 +176,10 @@ export class ClubService {
     const club = membership.club;
     const updatedClub = await this.prisma.club.update({
       where: { id: club.id },
-      data: { ...data },
+      data: {
+        ...data,
+        ...(timezone ? { timezone } : {}),
+      },
     });
 
     // Create audit log with membership ID included
@@ -233,7 +246,7 @@ export class ClubService {
               },
               data: {
                 status: ENMembershipStatus.ENDED,
-                endedAt: new Date(),
+                endedAt: this.timezoneService.nowUtc(),
               },
             },
           },
