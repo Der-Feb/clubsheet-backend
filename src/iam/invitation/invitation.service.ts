@@ -258,7 +258,7 @@ export class InvitationService {
     if (
       !matchedInvitation ||
       matchedInvitation.status !== ENInvitationStatus.PENDING ||
-      matchedInvitation.expiresAt <= new Date()
+      matchedInvitation.expiresAt <= this.timezoneService.nowUtc()
     ) {
       throw new ResourceNotFoundException(
         'Invitation token is invalid or expired.',

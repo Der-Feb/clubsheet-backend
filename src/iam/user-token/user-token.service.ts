@@ -247,7 +247,6 @@ export class UserTokenService {
       throw new BadRequestException('User email is already verified');
 
     const userId = user.id;
-    const now = new Date();
 
     // Compute HMAC digest and look up directly — no iteration needed
     const secret = this.configService.getOrThrow<string>('TOKEN_HASH_SECRET');
@@ -261,7 +260,7 @@ export class UserTokenService {
       !tokenRecord ||
       tokenRecord.userId !== userId ||
       tokenRecord.type !== ENUserTokenType.EMAIL_VERIFICATION ||
-      tokenRecord.expiresAt < now
+      tokenRecord.expiresAt < this.timezoneService.nowUtc()
     ) {
       throw new BadRequestException('Token is invalid or is expired');
     }
@@ -386,8 +385,6 @@ export class UserTokenService {
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) throw new ResourceNotFoundException('User not found', 'User');
 
-    const now = new Date();
-
     // Compute HMAC digest and look up directly — no iteration needed
     const secret = this.configService.getOrThrow<string>('TOKEN_HASH_SECRET');
     const tokenHash = computeTokenHash(secret, token);
@@ -400,7 +397,7 @@ export class UserTokenService {
       !tokenRecord ||
       tokenRecord.userId !== user.id ||
       tokenRecord.type !== ENUserTokenType.CHANGE_PASSWORD ||
-      tokenRecord.expiresAt < now
+      tokenRecord.expiresAt < this.timezoneService.nowUtc()
     ) {
       throw new BadRequestException('Token is invalid or has expired');
     }
