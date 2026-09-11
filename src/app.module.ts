@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
+import { TimezoneModule } from './common/timezone/timezone.module';
 import { PrismaModule } from './infrastructure/prisma/prisma.module';
 import { AuthModule } from './iam/auth/auth.module';
 import { AuditLogsModule } from './infrastructure/audit-logs/audit-logs.module';
@@ -22,6 +23,7 @@ import { FeatureModule } from './clubs/feature/feature.module';
 
 @Module({
   imports: [
+    TimezoneModule,
     PrismaModule,
     ConfigModule.forRoot({ isGlobal: true }),
     ScheduleModule.forRoot(),
