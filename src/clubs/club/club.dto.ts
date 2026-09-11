@@ -13,6 +13,7 @@ import {
 import * as countries from 'i18n-iso-countries';
 import { Transform } from 'class-transformer';
 import { IsImageUrl } from '@common/decorators/is-image-url.decorator';
+import { IsValidTimezone } from '@common/validators/is-valid-timezone.validator';
 import { ENMembershipType as GqlENMembershipType } from '@generated/prisma-nestjs-graphql/prisma/en-membership-type.enum';
 
 countries.registerLocale(require('i18n-iso-countries/langs/en.json'));
@@ -61,6 +62,12 @@ export class CreateClubInput {
     message: 'Each membership type must be of valid value',
   })
   membershipTypes!: ENMembershipType[];
+
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  @IsString()
+  @IsValidTimezone({ message: 'timezone must be a valid IANA timezone identifier' })
+  timezone?: string;
 }
 
 export { CreateClubInput as CreateClubDto };
@@ -104,6 +111,12 @@ export class UpdateClubInput {
   })
   @IsISO31661Alpha2({ message: 'Invalid Country' })
   country?: string;
+
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  @IsString()
+  @IsValidTimezone({ message: 'timezone must be a valid IANA timezone identifier' })
+  timezone?: string;
 }
 
 export { UpdateClubInput as UpdateClubDto };
