@@ -12,8 +12,8 @@ model Profile {
 
   sendEmailNotification Boolean @default(false) @map("send_email_notification")
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("profiles")
 }
@@ -44,8 +44,8 @@ model PlayerProfile {
   heightCm Decimal? @map("height_cm") @db.Decimal(5, 2)
   weightKg Decimal? @map("weight_kg") @db.Decimal(5, 2)
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("player_profiles")
 }
@@ -81,8 +81,8 @@ model CoachAssignment {
   responsabilities ENCoachResponsibility[] @default([])
   position         ENCoachPosition
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([membershipId, teamId])
   @@map("coach_assignments")
