@@ -7,6 +7,7 @@ import { PrismaService } from '@infrastructure/prisma/prisma.service';
 import { CommunicationService } from '@infrastructure/communication/communication.service';
 import { AuditLogsService } from '@infrastructure/audit-logs/audit-logs.service';
 import { ConfigService } from '@nestjs/config';
+import { TimezoneService } from '@common/timezone/timezone.service';
 import {
   ENAuditCategory,
   ENInvitationStatus,
@@ -31,6 +32,7 @@ export class InvitationService {
     private readonly communicationService: CommunicationService,
     private readonly auditLogsService: AuditLogsService,
     private readonly configService: ConfigService,
+    private readonly timezoneService: TimezoneService,
   ) {}
 
   private defaultInvitationTtlMs = 1000 * 60 * 60 * 48; // 48 hours
@@ -195,7 +197,7 @@ export class InvitationService {
           inviterId: inviterMembership.id, // membership id
           type,
           teamId: team?.id ?? null,
-          expiresAt: new Date(Date.now() + this.defaultInvitationTtlMs),
+          expiresAt: this.timezoneService.futureUtc(this.defaultInvitationTtlMs),
         },
       });
 
@@ -288,7 +290,7 @@ export class InvitationService {
           clubId: matchedInvitation.clubId,
           personId: userAlreadyExists.person.id,
           status: ENMembershipStatus.ACTIVE,
-          joinedAt: new Date(),
+          joinedAt: this.timezoneService.nowUtc(),
           types: {
             create: [{ type: matchedInvitation.type }],
           },
@@ -307,7 +309,7 @@ export class InvitationService {
           data: {
             membershipId: newMembership.id,
             teamId: matchedInvitation.teamId,
-            joinedAt: new Date(),
+            joinedAt: this.timezoneService.nowUtc(),
           },
         });
       }
