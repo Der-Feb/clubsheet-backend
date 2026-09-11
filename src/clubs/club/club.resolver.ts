@@ -11,7 +11,11 @@ import {
 } from '@common/guards/active-membership.guard';
 import { PermissionsGuard } from '@common/guards/permissions.guard';
 import { RequirePermissions } from '@common/decorators/require-permissions.decorator';
-import { CurrentMembership, CurrentUser } from '@common/decorators/current-user';
+import {
+  ClientTimezone,
+  CurrentMembership,
+  CurrentUser,
+} from '@common/decorators/current-user';
 import { TUserJWTPayload } from '@iam/auth/strategy/jwt.strategy';
 import { CloudinaryUploadInterceptor } from '../../media/cloudinary/cloudinary.interceptor';
 
@@ -40,8 +44,13 @@ export class ClubResolver {
   async createClub(
     @Args('input') input: CreateClubInput,
     @CurrentUser() currentUser: TUserJWTPayload,
+    @ClientTimezone() timezone: string | null,
   ) {
-    return this.clubService.createClub(input, currentUser.user_id);
+    return this.clubService.createClub(
+      input,
+      currentUser.user_id,
+      timezone ?? undefined,
+    );
   }
 
   @Mutation(() => Club, { name: 'updateClub' })
@@ -51,8 +60,13 @@ export class ClubResolver {
   async updateClub(
     @Args('input') input: UpdateClubInput,
     @CurrentMembership() currentMembership: TActiveMembershipPayload,
+    @ClientTimezone() timezone: string | null,
   ) {
-    return this.clubService.updateClub(input, currentMembership);
+    return this.clubService.updateClub(
+      input,
+      currentMembership,
+      timezone ?? undefined,
+    );
   }
 
   @Mutation(() => Boolean, { name: 'archiveClub' })
