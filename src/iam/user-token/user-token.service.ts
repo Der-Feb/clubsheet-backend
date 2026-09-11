@@ -11,6 +11,7 @@ import {
   computeTokenHash,
 } from '@common/utils/token-hash.util';
 import * as argon2 from 'argon2';
+import { TimezoneService } from '@common/timezone/timezone.service';
 
 @Injectable()
 export class UserTokenService {
@@ -19,6 +20,7 @@ export class UserTokenService {
     private readonly communicationService: CommunicationService,
     private readonly auditLogsService: AuditLogsService,
     private readonly configService: ConfigService,
+    private readonly timezoneService: TimezoneService,
   ) {}
 
   public async userExists(userId: string) {
@@ -176,7 +178,7 @@ export class UserTokenService {
       where: {
         userId,
         type: ENUserTokenType.EMAIL_VERIFICATION,
-        createdAt: { gte: new Date(Date.now() - this.fiveMinutes) },
+        createdAt: { gte: this.timezoneService.futureUtc(-this.fiveMinutes) },
       },
     });
     // If they hit the limit, lock them out early
@@ -205,7 +207,7 @@ export class UserTokenService {
         data: {
           hash,
           type: ENUserTokenType.EMAIL_VERIFICATION,
-          expiresAt: new Date(Date.now() + this.fiveMinutes), // expires in 5 minutes
+          expiresAt: this.timezoneService.futureUtc(this.fiveMinutes), // expires in 5 minutes
           userId: userId,
         },
       });
@@ -314,7 +316,7 @@ export class UserTokenService {
       where: {
         userId: user.id,
         type: ENUserTokenType.CHANGE_PASSWORD,
-        createdAt: { gte: new Date(Date.now() - this.fiveMinutes) },
+        createdAt: { gte: this.timezoneService.futureUtc(-this.fiveMinutes) },
       },
     });
 
@@ -343,7 +345,7 @@ export class UserTokenService {
         data: {
           hash,
           type: ENUserTokenType.CHANGE_PASSWORD,
-          expiresAt: new Date(Date.now() + this.fiveMinutes),
+          expiresAt: this.timezoneService.futureUtc(this.fiveMinutes),
           userId: user.id,
         },
       });

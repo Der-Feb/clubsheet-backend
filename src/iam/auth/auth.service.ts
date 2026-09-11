@@ -14,6 +14,7 @@ import { TPayload, TUserData } from './auth.types';
 import { Response } from 'express';
 import { ResourceNotFoundException } from '@common/exceptions/resource-not-found';
 import { AuditLogsService } from '@infrastructure/audit-logs/audit-logs.service';
+import { TimezoneService } from '@common/timezone/timezone.service';
 
 export type TUserWithPerson = Prisma.UserGetPayload<{
   include: { person: true };
@@ -25,6 +26,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly auditLogsService: AuditLogsService,
+    private readonly timezoneService: TimezoneService,
   ) {}
 
   private async ensurePersonAccountExists(email: string) {
@@ -139,7 +141,7 @@ export class AuthService {
   private async updateLastLogin(user: User) {
     return await this.prisma.user.update({
       where: { id: user.id },
-      data: { lastLogin: new Date() },
+      data: { lastLogin: this.timezoneService.nowUtc() },
     });
   }
 
