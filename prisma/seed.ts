@@ -24,11 +24,11 @@ const permissionsData = [
   { code: 'ROLE_REVOKE', name: 'Revoke Roles', module: ENFeature.IAM, action: ENPermissionAction.DELETE, description: 'Revoke roles to members' },
   { code: 'ROLE_DELETE', name: 'Delete Role', module: ENFeature.IAM, action: ENPermissionAction.DELETE, description: 'Delete or archive non system role' },
 
-  // PLAYER MODULE
-  { code: 'PLAYER_READ', name: 'Read Player Information', module: ENFeature.PLAYER, action: ENPermissionAction.READ, description: 'View player details' },
-  { code: 'PLAYER_WRITE', name: 'Write Player Information', module: ENFeature.PLAYER, action: ENPermissionAction.WRITE, description: 'Write player details' },
-  { code: 'PLAYER_ASSIGN', name: 'Move player to team', module: ENFeature.PLAYER, action: ENPermissionAction.ASSIGN, description: 'Move player to team' },
-  { code: 'PLAYER_UNASSIGN', name: 'Remove player from team', module: ENFeature.PLAYER, action: ENPermissionAction.DELETE, description: 'Remove player from team' },
+  // ATHLETE MODULE
+  { code: 'ATHLETE_READ', name: 'Read Athlete Information', module: ENFeature.ATHLETE, action: ENPermissionAction.READ, description: 'View athlete details' },
+  { code: 'ATHLETE_WRITE', name: 'Write Athlete Information', module: ENFeature.ATHLETE, action: ENPermissionAction.WRITE, description: 'Write athlete details' },
+  { code: 'ATHLETE_ASSIGN', name: 'Move athlete to team', module: ENFeature.ATHLETE, action: ENPermissionAction.ASSIGN, description: 'Move athlete to team' },
+  { code: 'ATHLETE_UNASSIGN', name: 'Remove athlete from team', module: ENFeature.ATHLETE, action: ENPermissionAction.DELETE, description: 'Remove athlete from team' },
 
   // MEMBERSHIP MODULE
   { code: 'MEMBERSHIP_READ', name: 'Read Membership Information', module: ENFeature.IAM, action: ENPermissionAction.READ, description: 'View membership details' },
@@ -53,12 +53,12 @@ const roleData = [
   {
     code: "COACH", name: "Coach",
     description: "Coach role with access to coach features of the club",
-    permissionCodes: ["CLUB_READ", "PLAYER_READ", "PLAYER_WRITE", "TEAM_READ"]
+    permissionCodes: ["CLUB_READ", "ATHLETE_READ", "ATHLETE_WRITE", "TEAM_READ"]
   },
   {
-    code: "PLAYER", name: "Player",
-    description: "Player role with access to player features of the club",
-    permissionCodes: ["PLAYER_READ"]
+    code: "ATHLETE", name: "Athlete",
+    description: "Athlete role with access to athlete features of the club",
+    permissionCodes: ["ATHLETE_READ"]
   }
 ];
 
@@ -79,8 +79,8 @@ const featuresData = [
     isCore: true, isActive: true,
   },
   {
-    code: ENFeature.PLAYER, name: 'Player Management',
-    description: 'Manage player records and team assignment',
+    code: ENFeature.ATHLETE, name: 'Athlete Management',
+    description: 'Manage athlete records and team assignment',
     isCore: true, isActive: true,
   },
   {
@@ -95,7 +95,7 @@ const featuresData = [
   },
   {
     code: ENFeature.SIGNING, name: 'Signings',
-    description: 'Player registrations, transfers and contract signings',
+    description: 'Athlete registrations, transfers and contract signings',
     isCore: false, isActive: true,
   },
   {
