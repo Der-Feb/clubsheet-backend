@@ -11,4 +11,3 @@ export class PassportJwtGuard extends AuthGuard('jwt') {
     return getRequestFromContext(context);
   }
 }
-

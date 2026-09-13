@@ -6,7 +6,15 @@ import {
 } from 'class-validator';
 
 export function IsImageUrl(
-  allowedExtensions: string[] = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'avif'],
+  allowedExtensions: string[] = [
+    'jpg',
+    'jpeg',
+    'png',
+    'gif',
+    'webp',
+    'svg',
+    'avif',
+  ],
   validationOptions?: ValidationOptions,
 ) {
   return function (object: object, propertyName: string) {
@@ -29,7 +37,10 @@ export function IsImageUrl(
 
           // 2. Build dynamic regex based on allowed extensions
           const extensionsPattern = allowedExtensions.join('|');
-          const imageRegex = new RegExp(`\\.(${extensionsPattern})($|\\?)`, 'i');
+          const imageRegex = new RegExp(
+            `\\.(${extensionsPattern})($|\\?)`,
+            'i',
+          );
 
           return imageRegex.test(value);
         },

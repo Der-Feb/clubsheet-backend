@@ -7,4 +7,3 @@ export const CurrentMembership = createParamDecorator(
     return req.activeMembership;
   },
 );
-

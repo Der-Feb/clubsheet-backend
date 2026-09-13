@@ -66,7 +66,9 @@ export class TasksService {
   public async deleteUnVerifiedAccounts() {
     this.logger.log('Running task: deleteUnVerifiedAccounts...');
     try {
-      const twentyFourHoursAgo = this.timezoneService.futureUtc(-(24 * 60 * 60 * 1000));
+      const twentyFourHoursAgo = this.timezoneService.futureUtc(
+        -(24 * 60 * 60 * 1000),
+      );
 
       // 1. Find all unverified users created over 24 hours ago
       const unverifiedUsers = await this.prisma.user.findMany({

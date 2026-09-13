@@ -197,7 +197,9 @@ export class InvitationService {
           inviterId: inviterMembership.id, // membership id
           type,
           teamId: team?.id ?? null,
-          expiresAt: this.timezoneService.futureUtc(this.defaultInvitationTtlMs),
+          expiresAt: this.timezoneService.futureUtc(
+            this.defaultInvitationTtlMs,
+          ),
         },
       });
 

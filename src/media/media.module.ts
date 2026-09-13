@@ -5,14 +5,10 @@ import { CloudinaryProvider } from './cloudinary/cloudinary.provider';
 
 @Module({
   providers: [
-    CloudinaryService, 
-    CloudinaryUploadInterceptor, 
-    CloudinaryProvider
+    CloudinaryService,
+    CloudinaryUploadInterceptor,
+    CloudinaryProvider,
   ],
-  exports: [
-    CloudinaryService, 
-    CloudinaryUploadInterceptor, 
-    CloudinaryProvider
-  ]
+  exports: [CloudinaryService, CloudinaryUploadInterceptor, CloudinaryProvider],
 })
 export class MediaModule {}

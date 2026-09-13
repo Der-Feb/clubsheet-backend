@@ -66,7 +66,9 @@ export class CreateClubInput {
   @Field(() => String, { nullable: true })
   @IsOptional()
   @IsString()
-  @IsValidTimezone({ message: 'timezone must be a valid IANA timezone identifier' })
+  @IsValidTimezone({
+    message: 'timezone must be a valid IANA timezone identifier',
+  })
   timezone?: string;
 }
 
@@ -115,7 +117,9 @@ export class UpdateClubInput {
   @Field(() => String, { nullable: true })
   @IsOptional()
   @IsString()
-  @IsValidTimezone({ message: 'timezone must be a valid IANA timezone identifier' })
+  @IsValidTimezone({
+    message: 'timezone must be a valid IANA timezone identifier',
+  })
   timezone?: string;
 }
 

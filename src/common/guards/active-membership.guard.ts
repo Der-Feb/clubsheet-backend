@@ -14,7 +14,6 @@ import {
 import { getRequestFromContext } from '@common/utils/request-context.util';
 import { TimezoneService } from '@common/timezone/timezone.service';
 
-
 export type TActiveMembershipPayload = Prisma.MembershipGetPayload<{
   include: {
     permissions: { include: { permission: true } };
@@ -100,7 +99,10 @@ export class ActiveMembershipGuard implements CanActivate {
       throw new UnauthorizedException('Active club membership not found.');
 
     const clientTz = req.headers['x-timezone'] as string | undefined;
-    req.timezone = this.timezoneService.resolve(clientTz, activeMembership.club.timezone);
+    req.timezone = this.timezoneService.resolve(
+      clientTz,
+      activeMembership.club.timezone,
+    );
 
     const rolePermissions = new Set<string>();
     for (const membershipRole of activeMembership.roles) {
@@ -134,4 +136,3 @@ export class ActiveMembershipGuard implements CanActivate {
     return getRequestFromContext(context);
   }
 }
-

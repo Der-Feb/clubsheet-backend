@@ -4,7 +4,11 @@ import { TimezoneService } from '@common/timezone/timezone.service';
 import { AuditLogsService } from '@infrastructure/audit-logs/audit-logs.service';
 import { PrismaService } from '@infrastructure/prisma/prisma.service';
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { ENAuditCategory, ENClubFeatureStatus, ENFeature } from '@prisma/client';
+import {
+  ENAuditCategory,
+  ENClubFeatureStatus,
+  ENFeature,
+} from '@prisma/client';
 
 @Injectable()
 export class FeatureService {
@@ -42,7 +46,10 @@ export class FeatureService {
 
     const clubFeature = await this.prisma.clubFeature.findUnique({
       where: {
-        clubId_featureId: { clubId: activeMembership.clubId, featureId: feature.id },
+        clubId_featureId: {
+          clubId: activeMembership.clubId,
+          featureId: feature.id,
+        },
       },
     });
     if (!clubFeature)
@@ -51,7 +58,9 @@ export class FeatureService {
       );
 
     if (clubFeature.status === ENClubFeatureStatus.ENABLED)
-      throw new ForbiddenException(`Feature ${featureCode} already enabled for this club`);
+      throw new ForbiddenException(
+        `Feature ${featureCode} already enabled for this club`,
+      );
 
     return await this.prisma.$transaction(async (tx) => {
       const updated = await tx.clubFeature.update({
@@ -93,11 +102,16 @@ export class FeatureService {
       throw new ResourceNotFoundException(`Feature ${featureCode} not found`);
 
     if (feature.isCore)
-      throw new ForbiddenException(`Feature ${featureCode} is core and cannot be disabled`);
+      throw new ForbiddenException(
+        `Feature ${featureCode} is core and cannot be disabled`,
+      );
 
     const clubFeature = await this.prisma.clubFeature.findUnique({
       where: {
-        clubId_featureId: { clubId: activeMembership.clubId, featureId: feature.id },
+        clubId_featureId: {
+          clubId: activeMembership.clubId,
+          featureId: feature.id,
+        },
       },
     });
     if (!clubFeature)
@@ -106,7 +120,9 @@ export class FeatureService {
       );
 
     if (clubFeature.status === ENClubFeatureStatus.DISABLED)
-      throw new ForbiddenException(`Feature ${featureCode} already disabled for this club`);
+      throw new ForbiddenException(
+        `Feature ${featureCode} already disabled for this club`,
+      );
 
     return await this.prisma.$transaction(async (tx) => {
       const updated = await tx.clubFeature.update({

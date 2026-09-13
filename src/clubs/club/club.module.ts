@@ -10,11 +10,11 @@ import { CloudinaryProvider } from '../../media/cloudinary/cloudinary.provider';
 @Module({
   imports: [AuditLogsModule, AuthModule],
   providers: [
-    ClubService, 
-    ClubResolver, 
-    CloudinaryUploadInterceptor, 
-    CloudinaryService, 
-    CloudinaryProvider
+    ClubService,
+    ClubResolver,
+    CloudinaryUploadInterceptor,
+    CloudinaryService,
+    CloudinaryProvider,
   ],
   exports: [ClubService],
 })

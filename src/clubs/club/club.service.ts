@@ -96,7 +96,10 @@ export class ClubService {
               this.generateShortName(createClubDto.name),
             logo: createClubDto.logo,
             country: createClubDto.country,
-            timezone: this.timezoneService.resolve(createClubDto.timezone ?? timezone, undefined),
+            timezone: this.timezoneService.resolve(
+              createClubDto.timezone ?? timezone,
+              undefined,
+            ),
             status: ENClubStatus.ACTIVE,
           },
         });
@@ -135,7 +138,9 @@ export class ClubService {
           // Role defaults resolve automatically at runtime via ActiveMembershipGuard.
         }
 
-        const features = await tx.feature.findMany({ where: { isActive: true, isCore: true } });
+        const features = await tx.feature.findMany({
+          where: { isActive: true, isCore: true },
+        });
         if (features.length > 0) {
           await tx.clubFeature.createMany({
             data: features.map((feature) => ({
@@ -200,7 +205,9 @@ export class ClubService {
     // if the club has a logo, and we updated the logo, delete the old one
     if (data.logo && membership.club.logo) {
       this.cloudinaryService.deleteFile(membership.club.logo).catch((err) => {
-        this.logger.error(`Error deleting Cloudinary asset: oldLogo: ${membership.club.logo} \nNew Logo: ${data.logo} \nError: ${err}`);
+        this.logger.error(
+          `Error deleting Cloudinary asset: oldLogo: ${membership.club.logo} \nNew Logo: ${data.logo} \nError: ${err}`,
+        );
       });
     }
 

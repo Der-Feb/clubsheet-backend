@@ -3,6 +3,6 @@ import { FeatureResolver } from './feature.resolver';
 import { FeatureService } from './feature.service';
 
 @Module({
-  providers: [FeatureResolver, FeatureService]
+  providers: [FeatureResolver, FeatureService],
 })
 export class FeatureModule {}
