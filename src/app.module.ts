@@ -15,7 +15,7 @@ import { PermissionModule } from './iam/permission/permission.module';
 import { RoleModule } from './iam/role/role.module';
 import { ProfileModule } from './iam/profile/profile.module';
 import { TeamModule } from './teams/team/team.module';
-import { PlayerModule } from './players/player/player.module';
+import { AthleteModule } from './athletes/athlete/athlete.module';
 import { GraphqlModule } from './graphql/graphql.module';
 import { AppResolver } from './app.resolver';
 import { MediaModule } from './media/media.module';
@@ -38,7 +38,7 @@ import { FeatureModule } from './clubs/feature/feature.module';
     ProfileModule,
     // Business domain modules
     ClubModule,
-    PlayerModule,
+    AthleteModule,
     TeamModule,
     // Infrastructure modules
     AuditLogsModule,
