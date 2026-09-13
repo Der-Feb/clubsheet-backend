@@ -4,7 +4,7 @@ enum ENAuditCategory {
   IAM
   CLUB
   TEAM
-  PLAYER
+  ATHLETE
   TRAINING
   MATCH
   MEDICAL

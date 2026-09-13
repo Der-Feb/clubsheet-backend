@@ -4,7 +4,7 @@ enum ENFeature {
   // core features
   CLUB
   TEAM
-  PLAYER
+  ATHLETE
 
   // aux features
   TRAINING
@@ -104,8 +104,8 @@ model Training {
   @@map("trainings")
 }
 
-// -- Player Management Feature --
-model Player {
+// -- Athlete Management Feature --
+model Athlete {
   id String @id @default(cuid())
 
   membershipId String     @map("membership_id")
@@ -118,7 +118,7 @@ model Player {
   leftAt   DateTime? @map("left_at") @db.Timestamptz(3)
 
   @@unique([membershipId, teamId])
-  @@map("players")
+  @@map("athletes")
 }
 
 // -- Team Management Feature --
@@ -132,7 +132,7 @@ model Team {
   name String @db.VarChar(50)
 
   trainings        Training[]
-  players          Player[]
+  athletes         Athlete[]
   coachAssignments CoachAssignment[]
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)

@@ -113,7 +113,7 @@ model Membership {
   createdClubs    Club[]       @relation("ClubCreator")
   sentInvitations Invitation[] @relation("MembershipSentInvitations")
 
-  player           Player[]
+  athlete          Athlete[]
   coachAssignments CoachAssignment[]
   enabledFeatures  ClubFeature[]
 

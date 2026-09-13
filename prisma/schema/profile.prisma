@@ -6,9 +6,9 @@ model Profile {
 
   phoneNumber String?
 
-  profilePic    String?        @map("profile_pic")
-  playerProfile PlayerProfile?
-  coachProfile  CoachProfile?
+  profilePic     String?         @map("profile_pic")
+  athleteProfile AthleteProfile?
+  coachProfile   CoachProfile?
 
   sendEmailNotification Boolean @default(false) @map("send_email_notification")
 
@@ -18,8 +18,8 @@ model Profile {
   @@map("profiles")
 }
 
-// for the players
-enum ENPlayerPosition {
+// for the athletes
+enum ENAthletePosition {
   GOALKEEPER
   DEFENDER
   MIDFIELDER
@@ -32,13 +32,13 @@ enum ENPreferredFoot {
   BOTH
 }
 
-model PlayerProfile {
+model AthleteProfile {
   id String @id @default(cuid())
 
   profileId String  @unique @map("profile_id")
   profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
-  position      ENPlayerPosition?
+  position      ENAthletePosition?
   preferredFoot ENPreferredFoot?  @map("preferred_foot")
 
   heightCm Decimal? @map("height_cm") @db.Decimal(5, 2)
@@ -47,7 +47,7 @@ model PlayerProfile {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  @@map("player_profiles")
+  @@map("athlete_profiles")
 }
 
 enum ENCoachPosition {
@@ -62,7 +62,7 @@ enum ENCoachPosition {
 enum ENCoachResponsibility {
   TRAINING
   TACTICS
-  PLAYER_DEVELOPMENT
+  ATHLETE_DEVELOPMENT
   MATCH_ANALYSIS
   FITNESS
   GOALKEEPING
