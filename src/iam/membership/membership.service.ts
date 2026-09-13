@@ -14,12 +14,14 @@ import {
 import { PrismaService } from '@infrastructure/prisma/prisma.service';
 import { AuditLogsService } from '@infrastructure/audit-logs/audit-logs.service';
 import { TActiveMembershipPayload } from '@common/guards/active-membership.guard';
+import { TimezoneService } from '@common/timezone/timezone.service';
 
 @Injectable()
 export class MembershipService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly AuditLogService: AuditLogsService,
+    private readonly timezoneService: TimezoneService,
   ) {}
 
   public async createMembership(
@@ -61,7 +63,7 @@ export class MembershipService {
           data: {
             personId,
             clubId,
-            joinedAt: new Date(),
+            joinedAt: this.timezoneService.nowUtc(),
             types: {
               create: types.map((type) => ({ type })),
             },
@@ -122,13 +124,13 @@ export class MembershipService {
           where: { id: membershipId },
           data: {
             status: ENMembershipStatus.ENDED,
-            endedAt: new Date(),
+            endedAt: this.timezoneService.nowUtc(),
           },
         });
 
         await tx.player.updateMany({
           where: { membershipId, leftAt: null },
-          data: { leftAt: new Date() },
+          data: { leftAt: this.timezoneService.nowUtc() },
         });
 
         await this.AuditLogService.createLog(

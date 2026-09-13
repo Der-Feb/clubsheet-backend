@@ -66,4 +66,3 @@ export class PermissionsGuard implements CanActivate {
     return getRequestFromContext(context);
   }
 }
-

@@ -24,8 +24,8 @@ model Feature {
   isCore Boolean @default(false) @map("is_core")
   isActive Boolean @default(true)  @map("is_active")  // platform-wide kill switch (unreleased/deprecated)
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   clubFeatures ClubFeature[]
 
@@ -50,10 +50,10 @@ model ClubFeature {
 
   enabledById String?     @map("enabled_by")
   enabledBy   Membership? @relation(fields: [enabledById], references: [id])
-  enabledAt   DateTime?   @map("enabled_at")
+  enabledAt   DateTime?   @map("enabled_at") @db.Timestamptz(3)
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([clubId, featureId])
   @@index([clubId])
@@ -88,15 +88,15 @@ model Training {
   title       String?
   description String?
 
-  startsAt DateTime @map("starts_at")
-  endsAt   DateTime @map("ends_at")
+  startsAt DateTime @map("starts_at") @db.Timestamptz(3)
+  endsAt   DateTime @map("ends_at") @db.Timestamptz(3)
 
   location String?
 
   status ENTrainingStatus @default(SCHEDULED)
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@index([clubId])
   @@index([teamId])
@@ -114,8 +114,8 @@ model Player {
   teamId String @map("team_id")
   team   Team   @relation(fields: [teamId], references: [id])
 
-  joinedAt DateTime  @default(now()) @map("joined_at")
-  leftAt   DateTime? @map("left_at")
+  joinedAt DateTime  @default(now()) @map("joined_at") @db.Timestamptz(3)
+  leftAt   DateTime? @map("left_at") @db.Timestamptz(3)
 
   @@unique([membershipId, teamId])
   @@map("players")
@@ -135,8 +135,8 @@ model Team {
   players          Player[]
   coachAssignments CoachAssignment[]
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("teams")
 }

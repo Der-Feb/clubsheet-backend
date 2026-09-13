@@ -1,6 +1,9 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { ActiveMembershipGuard, TActiveMembershipPayload } from '@common/guards/active-membership.guard';
+import {
+  ActiveMembershipGuard,
+  TActiveMembershipPayload,
+} from '@common/guards/active-membership.guard';
 import { EmailVerifiedGuard } from '@common/guards/email-verified.guard';
 import { PassportJwtGuard } from '@common/guards/passport.guard';
 import { FeatureService } from './feature.service';
@@ -25,7 +28,7 @@ export class FeatureResolver {
   @Query(() => ClubFeature, { nullable: true })
   public async getFeature(
     @Args('featureId', ParseCuidPipe) featureId: string,
-    @CurrentMembership() membership: TActiveMembershipPayload
+    @CurrentMembership() membership: TActiveMembershipPayload,
   ) {
     return await this.featureService.getFeature(membership.clubId, featureId);
   }
@@ -34,7 +37,7 @@ export class FeatureResolver {
   @UseGuards(PermissionsGuard)
   @RequirePermissions(true, ['CLUB_READ'])
   public async getClubFeatures(
-    @CurrentMembership() membership: TActiveMembershipPayload
+    @CurrentMembership() membership: TActiveMembershipPayload,
   ) {
     return await this.featureService.getClubFeatures(membership.clubId);
   }
@@ -43,7 +46,8 @@ export class FeatureResolver {
   @UseGuards(PermissionsGuard)
   @RequirePermissions(true, ['CLUB_WRITE'])
   public async enableFeature(
-    @Args('featureCode', { type: () => GQLENFeature }) featureCode: GQLENFeature,
+    @Args('featureCode', { type: () => GQLENFeature })
+    featureCode: GQLENFeature,
     @CurrentMembership() membership: TActiveMembershipPayload,
   ) {
     return await this.featureService.enableFeature(featureCode, membership);
@@ -53,7 +57,8 @@ export class FeatureResolver {
   @UseGuards(PermissionsGuard)
   @RequirePermissions(true, ['CLUB_WRITE'])
   public async disableFeature(
-    @Args('featureCode', { type: () => GQLENFeature }) featureCode: GQLENFeature,
+    @Args('featureCode', { type: () => GQLENFeature })
+    featureCode: GQLENFeature,
     @CurrentMembership() membership: TActiveMembershipPayload,
   ) {
     return await this.featureService.disableFeature(featureCode, membership);

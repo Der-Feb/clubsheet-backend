@@ -12,7 +12,7 @@ import {
   Prisma,
 } from '@prisma/client';
 import { getRequestFromContext } from '@common/utils/request-context.util';
-
+import { TimezoneService } from '@common/timezone/timezone.service';
 
 export type TActiveMembershipPayload = Prisma.MembershipGetPayload<{
   include: {
@@ -40,13 +40,17 @@ declare global {
     interface Request {
       activeMembership?: TActiveMembershipPayload;
       effectivePermissions?: string[];
+      timezone?: string | null;
     }
   }
 }
 
 @Injectable()
 export class ActiveMembershipGuard implements CanActivate {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly timezoneService: TimezoneService,
+  ) {}
 
   async canActivate(context: ExecutionContext) {
     const req = this.getRequest(context);
@@ -94,6 +98,12 @@ export class ActiveMembershipGuard implements CanActivate {
     if (!activeMembership)
       throw new UnauthorizedException('Active club membership not found.');
 
+    const clientTz = req.headers['x-timezone'] as string | undefined;
+    req.timezone = this.timezoneService.resolve(
+      clientTz,
+      activeMembership.club.timezone,
+    );
+
     const rolePermissions = new Set<string>();
     for (const membershipRole of activeMembership.roles) {
       for (const rolePerm of membershipRole.role.permissions) {
@@ -126,4 +136,3 @@ export class ActiveMembershipGuard implements CanActivate {
     return getRequestFromContext(context);
   }
 }
-

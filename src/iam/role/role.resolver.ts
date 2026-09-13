@@ -3,11 +3,7 @@ import { UseGuards } from '@nestjs/common';
 import { RoleService } from './role.service';
 import { Role } from '@generated/prisma-nestjs-graphql/role/role.model';
 import { MembershipRole } from '@generated/prisma-nestjs-graphql/membership-role/membership-role.model';
-import {
-  AssignRoleInput,
-  CreateRoleInput,
-  UpdateRoleInput,
-} from './role.dto';
+import { AssignRoleInput, CreateRoleInput, UpdateRoleInput } from './role.dto';
 import { PassportJwtGuard } from '@common/guards/passport.guard';
 import { EmailVerifiedGuard } from '@common/guards/email-verified.guard';
 import {
@@ -33,9 +29,7 @@ export class RoleResolver {
   constructor(private readonly roleService: RoleService) {}
 
   @Query(() => [MembershipRole], { name: 'myRoles' })
-  getMyRoles(
-    @CurrentMembership() currentMembership: TActiveMembershipPayload,
-  ) {
+  getMyRoles(@CurrentMembership() currentMembership: TActiveMembershipPayload) {
     return currentMembership?.roles || [];
   }
 

@@ -32,4 +32,3 @@ export class EmailVerifiedGuard implements CanActivate {
     return getRequestFromContext(context);
   }
 }
-

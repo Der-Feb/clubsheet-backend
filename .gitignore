@@ -90,5 +90,9 @@ payloads/
 ## context docs
 docs/
 
+## editor
+.vscode/
+.kiro/
+
 ## Personal notes & todos
 todo*.md

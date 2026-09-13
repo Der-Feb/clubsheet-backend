@@ -12,16 +12,18 @@ import {
 import { Transform, Type } from 'class-transformer';
 import * as nationalities from 'i18n-nationality';
 import * as countries from 'i18n-iso-countries';
+import * as isoCountry from 'i18n-iso-countries/langs/en.json';
+import * as isoLang from 'i18n-nationality/langs/en.json';
 
-nationalities.registerLocale(require('i18n-nationality/langs/en.json'));
-countries.registerLocale(require('i18n-iso-countries/langs/en.json'));
+nationalities.registerLocale(isoLang);
+countries.registerLocale(isoCountry);
 
 export class RegisteringPersonDto {
-  @Transform(({ value }) => value?.trim().toLowerCase())
+  @Transform(({ value }: { value: string | undefined }) => value?.trim().toLowerCase())
   @IsString()
   firstName!: string;
 
-  @Transform(({ value }) => value?.trim().toLowerCase())
+  @Transform(({ value }: { value: string | undefined  }) => value?.trim().toLowerCase())
   @IsString()
   lastName!: string;
 
@@ -33,8 +35,8 @@ export class RegisteringPersonDto {
   dob!: Date;
 
   @IsString()
-  @Transform(({ value }) => value?.trim().toLowerCase())
-  @Transform(({ value }) => {
+  @Transform(({ value }: { value: string | undefined  }) => value?.trim().toLowerCase())
+  @Transform(({ value }: { value: string | undefined  }) => {
     if (typeof value !== 'string') return value;
 
     const nationalityCode = nationalities.getAlpha2Code(value, 'en');
@@ -53,11 +55,11 @@ export class RegisteringPersonDto {
 }
 
 export class RegisterUserDto {
-  @Transform(({ value }) => value?.trim().toLowerCase())
+  @Transform(({ value }: { value: string  }) => value?.trim().toLowerCase())
   @IsEmail()
   email!: string;
 
-  @Transform(({ value }) => value?.trim().toLowerCase())
+  @Transform(({ value }: { value: string  }) => value?.trim().toLowerCase())
   @IsString()
   @MinLength(5)
   password!: string;

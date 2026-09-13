@@ -13,9 +13,11 @@ import {
 import * as countries from 'i18n-iso-countries';
 import { Transform } from 'class-transformer';
 import { IsImageUrl } from '@common/decorators/is-image-url.decorator';
+import { IsValidTimezone } from '@common/validators/is-valid-timezone.validator';
 import { ENMembershipType as GqlENMembershipType } from '@generated/prisma-nestjs-graphql/prisma/en-membership-type.enum';
+import * as isoCountry from 'i18n-iso-countries/langs/en.json';
 
-countries.registerLocale(require('i18n-iso-countries/langs/en.json'));
+countries.registerLocale(isoCountry);
 
 @InputType()
 export class CreateClubInput {
@@ -40,8 +42,8 @@ export class CreateClubInput {
 
   @Field(() => String)
   @IsString()
-  @Transform(({ value }) => {
-    if (typeof value !== 'string') return value;
+  @Transform(({ value }: { value: string | undefined }) => {
+    if (!value || typeof value !== 'string') return value;
 
     const cleaned = value.trim().toLowerCase();
     const countryCode = countries.getAlpha2Code(cleaned, 'en');
@@ -61,6 +63,14 @@ export class CreateClubInput {
     message: 'Each membership type must be of valid value',
   })
   membershipTypes!: ENMembershipType[];
+
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  @IsString()
+  @IsValidTimezone({
+    message: 'timezone must be a valid IANA timezone identifier',
+  })
+  timezone?: string;
 }
 
 export { CreateClubInput as CreateClubDto };
@@ -92,7 +102,7 @@ export class UpdateClubInput {
   @Field(() => String, { nullable: true })
   @IsOptional()
   @IsString()
-  @Transform(({ value }) => {
+  @Transform(({ value }: { value: string | undefined }) => {
     if (typeof value !== 'string') return value;
 
     const cleaned = value.trim().toLowerCase();
@@ -104,6 +114,14 @@ export class UpdateClubInput {
   })
   @IsISO31661Alpha2({ message: 'Invalid Country' })
   country?: string;
+
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  @IsString()
+  @IsValidTimezone({
+    message: 'timezone must be a valid IANA timezone identifier',
+  })
+  timezone?: string;
 }
 
 export { UpdateClubInput as UpdateClubDto };

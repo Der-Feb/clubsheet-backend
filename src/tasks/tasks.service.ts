@@ -1,13 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '@infrastructure/prisma/prisma.service';
+import { TimezoneService } from '@common/timezone/timezone.service';
 import { ENUserTokenStatus, ENInvitationStatus } from '@prisma/client';
 
 @Injectable()
 export class TasksService {
   private readonly logger = new Logger(TasksService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly timezoneService: TimezoneService,
+  ) {}
 
   /**
    * Deletes user tokens that are expired or marked as DISRUPTED.
@@ -20,7 +24,7 @@ export class TasksService {
       const result = await this.prisma.userToken.deleteMany({
         where: {
           OR: [
-            { expiresAt: { lt: new Date() } },
+            { expiresAt: { lt: this.timezoneService.nowUtc() } },
             { status: ENUserTokenStatus.DISRUPTED },
           ],
         },
@@ -42,7 +46,7 @@ export class TasksService {
       const result = await this.prisma.invitation.deleteMany({
         where: {
           OR: [
-            { expiresAt: { lt: new Date() } },
+            { expiresAt: { lt: this.timezoneService.nowUtc() } },
             { status: ENInvitationStatus.DISRUPTED },
           ],
         },
@@ -62,7 +66,9 @@ export class TasksService {
   public async deleteUnVerifiedAccounts() {
     this.logger.log('Running task: deleteUnVerifiedAccounts...');
     try {
-      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const twentyFourHoursAgo = this.timezoneService.futureUtc(
+        -(24 * 60 * 60 * 1000),
+      );
 
       // 1. Find all unverified users created over 24 hours ago
       const unverifiedUsers = await this.prisma.user.findMany({

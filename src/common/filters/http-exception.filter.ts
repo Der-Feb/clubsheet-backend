@@ -23,7 +23,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       // Log the error
       this.logger.error(exception.message, exception.stack);
 
-      // In GraphQL, we let NestJS handle formatting by re-throwing 
+      // In GraphQL, we let NestJS handle formatting by re-throwing
       // standard HttpExceptions or wrapping unknown errors in a clean format.
       if (exception instanceof HttpException) {
         return exception;
