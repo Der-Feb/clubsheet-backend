@@ -4,7 +4,7 @@ import { ProfileService } from './profile.service';
 import { Profile } from '@generated/prisma-nestjs-graphql/profile/profile.model';
 import {
   CreateCoachAndProfileInput,
-  CreatePlayerAndProfileInput,
+  CreateAthleteAndProfileInput,
   CreateProfileInput,
 } from './profile.dto';
 import { PassportJwtGuard } from '@common/guards/passport.guard';
@@ -48,14 +48,14 @@ export class ProfileResolver {
     return this.profileService.createProfile(currentMembership, input);
   }
 
-  @Mutation(() => Profile, { name: 'createPlayerProfile' })
-  async createPlayerProfile(
-    @Args('input') input: CreatePlayerAndProfileInput,
+  @Mutation(() => Profile, { name: 'createAthleteProfile' })
+  async createAthleteProfile(
+    @Args('input') input: CreateAthleteAndProfileInput,
     @CurrentMembership() currentMembership: TActiveMembershipPayload,
   ) {
-    return this.profileService.createPlayerProfile(
+    return this.profileService.createAthleteProfile(
       currentMembership,
-      input.playerProfile,
+      input.athleteProfile,
       input.profile,
     );
   }

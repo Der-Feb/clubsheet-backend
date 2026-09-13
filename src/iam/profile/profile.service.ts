@@ -4,7 +4,7 @@ import { AuditLogsService } from '@infrastructure/audit-logs/audit-logs.service'
 import { TActiveMembershipPayload } from '@common/guards/active-membership.guard';
 import {
   CreateCoachProfileDto,
-  CreatePlayerProfileDto,
+  CreateAthleteProfileDto,
   CreateProfileDto,
 } from './profile.dto';
 
@@ -19,7 +19,6 @@ export class ProfileService {
     membership: TActiveMembershipPayload,
     profileData?: CreateProfileDto,
   ) {
-    // check if the person already has a profile
     const existingProfile = await this.prisma.profile.findFirst({
       where: { personId: membership.personId },
     });
@@ -27,25 +26,23 @@ export class ProfileService {
       throw new BadRequestException('Profile already exists for this person');
     }
 
-    // create the profile first
     return await this.prisma.profile.create({
       data: {
         personId: membership.personId,
         ...profileData,
       },
       include: {
-        playerProfile: true,
+        athleteProfile: true,
         coachProfile: true,
       },
     });
   }
 
-  public async createPlayerProfile(
+  public async createAthleteProfile(
     membership: TActiveMembershipPayload,
-    playerData: CreatePlayerProfileDto,
+    athleteData: CreateAthleteProfileDto,
     profileData?: CreateProfileDto,
   ) {
-    // check if the player has a profile already
     let profile = await this.prisma.profile.findFirst({
       where: { personId: membership.personId },
     });
@@ -57,11 +54,10 @@ export class ProfileService {
       profile = await this.createProfile(membership, profileData);
     }
 
-    // create the player profile
-    await this.prisma.playerProfile.create({
+    await this.prisma.athleteProfile.create({
       data: {
         profileId: profile.id,
-        ...playerData,
+        ...athleteData,
       },
     });
 
@@ -73,7 +69,6 @@ export class ProfileService {
     coachData: CreateCoachProfileDto,
     profileData?: CreateProfileDto,
   ) {
-    // check if the coach has a profile already
     let profile = await this.prisma.profile.findFirst({
       where: { personId: membership.personId },
     });
@@ -85,7 +80,6 @@ export class ProfileService {
       profile = await this.createProfile(membership, profileData);
     }
 
-    // create the coach profile
     await this.prisma.coachProfile.create({
       data: {
         profileId: profile.id,
@@ -100,7 +94,7 @@ export class ProfileService {
     return await this.prisma.profile.findFirst({
       where: { personId },
       include: {
-        playerProfile: true,
+        athleteProfile: true,
         coachProfile: true,
       },
     });

@@ -3,7 +3,7 @@ import { IsPhoneNumberConstraint } from '@common/validators/is-phone-number.vali
 import {
   ENCoachPosition,
   ENCoachResponsibility,
-  ENPlayerPosition,
+  ENAthletePosition,
   ENPreferredFoot,
 } from '@prisma/client';
 import {
@@ -18,7 +18,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ENPlayerPosition as GqlENPlayerPosition } from '@generated/prisma-nestjs-graphql/prisma/en-player-position.enum';
+import { ENAthletePosition as GqlENAthletePosition } from '@generated/prisma-nestjs-graphql/prisma/en-athlete-position.enum';
 import { ENPreferredFoot as GqlENPreferredFoot } from '@generated/prisma-nestjs-graphql/prisma/en-preferred-foot.enum';
 import { ENCoachPosition as GqlENCoachPosition } from '@generated/prisma-nestjs-graphql/prisma/en-coach-position.enum';
 import { ENCoachResponsibility as GqlENCoachResponsibility } from '@generated/prisma-nestjs-graphql/prisma/en-coach-responsibility.enum';
@@ -45,10 +45,10 @@ export class CreateProfileInput {
 export { CreateProfileInput as CreateProfileDto };
 
 @InputType()
-export class CreatePlayerProfileInput {
-  @Field(() => GqlENPlayerPosition)
-  @IsEnum(ENPlayerPosition)
-  position!: ENPlayerPosition;
+export class CreateAthleteProfileInput {
+  @Field(() => GqlENAthletePosition)
+  @IsEnum(ENAthletePosition)
+  position!: ENAthletePosition;
 
   @Field(() => GqlENPreferredFoot, { nullable: true })
   @IsOptional()
@@ -66,7 +66,7 @@ export class CreatePlayerProfileInput {
   weightKg?: number;
 }
 
-export { CreatePlayerProfileInput as CreatePlayerProfileDto };
+export { CreateAthleteProfileInput as CreateAthleteProfileDto };
 
 @InputType()
 export class CreateCoachProfileInput {
@@ -99,11 +99,11 @@ export class CreateCoachAssignmentInput {
 export { CreateCoachAssignmentInput as CreateCoachAssignmentDto };
 
 @InputType()
-export class CreatePlayerAndProfileInput {
-  @Field(() => CreatePlayerProfileInput)
+export class CreateAthleteAndProfileInput {
+  @Field(() => CreateAthleteProfileInput)
   @ValidateNested()
-  @Type(() => CreatePlayerProfileInput)
-  playerProfile!: CreatePlayerProfileInput;
+  @Type(() => CreateAthleteProfileInput)
+  athleteProfile!: CreateAthleteProfileInput;
 
   @Field(() => CreateProfileInput)
   @ValidateNested()
@@ -111,7 +111,7 @@ export class CreatePlayerAndProfileInput {
   profile!: CreateProfileInput;
 }
 
-export { CreatePlayerAndProfileInput as CreatePlayerAndProfileDto };
+export { CreateAthleteAndProfileInput as CreateAthleteAndProfileDto };
 
 @InputType()
 export class CreateCoachAndProfileInput {
