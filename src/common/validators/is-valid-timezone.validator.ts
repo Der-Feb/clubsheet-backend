@@ -9,7 +9,7 @@ import { isValidIanaTimezone } from '../timezone/is-valid-iana-timezone';
 
 @ValidatorConstraint({ name: 'isValidTimezone', async: false })
 export class IsValidTimezoneConstraint implements ValidatorConstraintInterface {
-  public validate(value: any, _args: ValidationArguments): boolean {
+  public validate(value: string | null | undefined): boolean {
     return isValidIanaTimezone(value);
   }
 

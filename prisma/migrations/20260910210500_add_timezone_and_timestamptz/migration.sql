@@ -2,8 +2,8 @@
 -- Migration: Add Timezone Context & Convert Timestamps to TIMESTAMPTZ / DATE
 -- =============================================================================
 
--- 1. Add optional timezone to clubs
-ALTER TABLE "clubs" ADD COLUMN IF NOT EXISTS "timezone" TEXT DEFAULT 'UTC';
+-- 1. Add required timezone to clubs (default UTC, non-nullable to match Prisma required contract)
+ALTER TABLE "clubs" ADD COLUMN IF NOT EXISTS "timezone" TEXT NOT NULL DEFAULT 'UTC';
 
 -- 2. Convert person dob to DATE (calendar date without timezone shifts)
 ALTER TABLE "persons" ALTER COLUMN "dob" TYPE DATE USING "dob"::DATE;

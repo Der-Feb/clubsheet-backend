@@ -183,7 +183,7 @@ export class ClubService {
       where: { id: club.id },
       data: {
         ...data,
-        ...(timezone ? { timezone } : {}),
+        ...(data.timezone === undefined && timezone ? { timezone } : {}),
       },
     });
 

@@ -114,6 +114,20 @@ describe('TimezoneService', () => {
         BadRequestException,
       );
     });
+
+    it('resolves DST fall-back ambiguity to the earlier (pre-transition) UTC instant — America/New_York 2026-11-01', () => {
+      // On 2026-11-01 in America/New_York, clocks fall back from 2:00 AM EDT to 1:00 AM EST.
+      // The local time "01:30:00" is ambiguous — it occurs twice:
+      //   Earlier (pre-transition, EDT = UTC-4)  -> 2026-11-01T05:30:00.000Z
+      //   Later  (post-transition, EST = UTC-5) -> 2026-11-01T06:30:00.000Z
+      // Service policy (documented in timezone.service.ts) is to pick the earlier instant.
+      // This is a regression guard against Luxon/dependency updates silently changing the policy.
+      const result = service.toUtc(
+        '2026-11-01T01:30:00',
+        'America/New_York',
+      );
+      expect(result.toISOString()).toBe('2026-11-01T05:30:00.000Z');
+    });
   });
 
   describe('futureUtc', () => {
