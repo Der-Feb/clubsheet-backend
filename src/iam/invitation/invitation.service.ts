@@ -158,7 +158,7 @@ export class InvitationService {
 
       if (!team) {
         throw new BadRequestException(
-          'This club has no team matching the provided teamId. Create a team before inviting a player.',
+          'This club has no team matching the provided teamId. Create a team before inviting an athlete.',
         );
       }
     }
@@ -299,7 +299,7 @@ export class InvitationService {
         },
       });
 
-      // ATHLETE invitations must carry a team assignment; create the Player record.
+      // ATHLETE invitations must carry a team assignment; create the Athlete record.
       if (matchedInvitation.type === ENMembershipType.ATHLETE) {
         if (!matchedInvitation.teamId) {
           throw new BadRequestException(
@@ -307,7 +307,7 @@ export class InvitationService {
           );
         }
 
-        await tx.player.create({
+        await tx.athlete.create({
           data: {
             membershipId: newMembership.id,
             teamId: matchedInvitation.teamId,

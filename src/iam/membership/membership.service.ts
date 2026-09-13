@@ -128,7 +128,7 @@ export class MembershipService {
           },
         });
 
-        await tx.player.updateMany({
+        await tx.athlete.updateMany({
           where: { membershipId, leftAt: null },
           data: { leftAt: this.timezoneService.nowUtc() },
         });
