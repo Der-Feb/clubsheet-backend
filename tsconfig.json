@@ -30,7 +30,7 @@
       "@infrastructure/*": ["./src/infrastructure/*"],
       "@iam/*": ["./src/iam/*"],
       "@clubs/*": ["./src/clubs/*"],
-      "@players/*": ["./src/players/*"],
+      "@athletes/*": ["./src/athletes/*"],
       "@teams/*": ["./src/teams/*"],
       "@tasks/*": ["./src/tasks/*"],
       "@generated/*": ["./src/@generated/*"]
