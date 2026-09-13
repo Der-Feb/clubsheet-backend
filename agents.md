@@ -11,7 +11,7 @@ ClubSheet is a multi-tenant football club management platform designed to manage
 - Roles
 - Permissions
 - Profiles
-- Players
+- Athletes
 - Coaches
 - Teams
 - Training
@@ -90,8 +90,8 @@ src/
 ├── teams/
 │   └── team/
 │
-├── players/
-│   └── player/
+├── athletes/
+│   └── athlete/
 │
 ├── infrastructure/
 │   ├── prisma/
@@ -138,7 +138,7 @@ Operational relationships then extend from the membership/club context:
 Membership
    ├── Roles
    ├── Permissions
-   ├── Player
+   ├── Athlete
    └── CoachAssignment
              ↓
            Team
@@ -156,13 +156,13 @@ A person may have:
 
 - a User account
 - a Profile
-- a PlayerProfile
+- an AthleteProfile
 - a CoachProfile
 - Memberships in clubs
 
 A person is not automatically a user.
 
-A person is not automatically a player.
+A person is not automatically an athlete.
 
 A person is not automatically a coach.
 
@@ -255,7 +255,7 @@ Use REST for:
 - Roles
 - Permissions
 - Profiles
-- Players
+- Athletes
 - Teams
 - Training
 - Matches
@@ -507,7 +507,7 @@ System roles currently include:
 ```text
 ADMIN
 COACH
-PLAYER
+ATHLETE
 ```
 
 System roles must not be treated the same as custom club roles.
@@ -761,7 +761,7 @@ Current feature concepts include:
 IAM
 CLUB
 TEAM
-PLAYER
+ATHLETE
 TRAINING
 MATCH
 SIGNING
@@ -803,13 +803,13 @@ Club
 Team
 ```
 
-Players and coaches are specialized operational relationships:
+Athletes and coaches are specialized operational relationships:
 
 ```text
 Person
-   ├── PlayerProfile
+   ├── AthleteProfile
    │      ↓
-   │    Player
+   │    Athlete
    │      ↓
    │    Team
    │
@@ -824,21 +824,21 @@ Keep identity, membership, profile, and operational roles conceptually separate.
 
 ---
 
-# Player Architecture
+# Athlete Architecture
 
-A person should not automatically become a player.
+A person should not automatically become an athlete.
 
-Player functionality should handle:
+Athlete functionality should handle:
 
-- player creation
-- player profile
-- player information
+- athlete creation
+- athlete profile
+- athlete information
 - team assignment
 - team removal
-- player lifecycle
-- player permissions
+- athlete lifecycle
+- athlete permissions
 
-Player operations must remain club-scoped.
+Athlete operations must remain club-scoped.
 
 ---
 
@@ -873,13 +873,13 @@ Future team relationships include:
 
 ```text
 Team
-├── Players
+├── Athletes
 ├── Coaches
 ├── Training
 └── Matches
 ```
 
-Never allow a player, coach, or training record from another club to be attached to the current club's team.
+Never allow an athlete, coach, or training record from another club to be attached to the current club's team.
 
 ---
 
@@ -894,7 +894,7 @@ Testing priority:
 3. Membership lifecycle
 4. Multi-club isolation
 5. Permission resolution
-6. Player/team relationships
+6. Athlete/team relationships
 7. Critical business workflows
 8. Scheduled cleanup
 9. Security-sensitive functionality
@@ -978,7 +978,7 @@ type(scope): description
 Examples:
 
 ```text
-feat(player): add player management endpoints
+feat(athlete): add athlete management endpoints
 
 feat(membership): implement membership lifecycle
 
@@ -1080,8 +1080,8 @@ The following areas are already substantially implemented:
 
 The following areas are incomplete or planned:
 
-- Player module
-- Player ↔ Team assignment
+- Athlete module
+- Athlete ↔ Team assignment
 - Coach assignment workflows
 - Training module
 - Notification system
