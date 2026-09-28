@@ -96,3 +96,6 @@ docs/
 
 ## Personal notes & todos
 todo*.md
+
+# GraphQL schema - generated through startup commands
+src/graphql/schema.graphql

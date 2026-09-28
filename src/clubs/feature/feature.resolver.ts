@@ -42,7 +42,7 @@ export class FeatureResolver {
     return await this.featureService.getClubFeatures(membership.clubId);
   }
 
-  @Mutation()
+  @Mutation(() => ClubFeature)
   @UseGuards(PermissionsGuard)
   @RequirePermissions(true, ['CLUB_WRITE'])
   public async enableFeature(
