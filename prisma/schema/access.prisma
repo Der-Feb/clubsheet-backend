@@ -177,7 +177,9 @@ model Invitation {
 
   email String
 
-  tokenHash String @unique @map("token_hash")
+  tokenHash String @map("token_hash")
+
+  failedAttempts Int @default(0) @map("failed_attempts")
 
   type ENMembershipType
 
@@ -201,6 +203,7 @@ model Invitation {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@index([email])
+  @@index([email, tokenHash, status])
   @@index([clubId])
   @@index([expiresAt])
   @@map("invitations")
