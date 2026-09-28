@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Post,
   Put,
+  Query,
   Res,
   UseGuards,
 } from '@nestjs/common';
@@ -129,6 +130,27 @@ export class AuthController {
   @Put('email/verify')
   public async verifyEMail(@Body() data: VerifyEmailDto) {
     return await this.userTokenService.verifyEmail(data.email, data.token);
+  }
+
+  /**
+   * Magic-link target for email verification when no frontend is configured.
+   *
+   * The link embedded in the verification email points here (via APP_URL) when
+   * FRONTEND_URL is absent. Once a frontend exists, it handles the link instead
+   * and this endpoint is no longer reached via email.
+   *
+   * Usage: GET /auth/email/verify-link?email=user@example.com&token=AB12CD
+   */
+  @HttpCode(HttpStatus.OK)
+  @Get('email/verify-link')
+  public async verifyEmailViaLink(
+    @Query('email') email: string,
+    @Query('token') token: string,
+  ) {
+    return await this.userTokenService.verifyEmail(
+      email?.trim().toLowerCase(),
+      token?.trim().toUpperCase(),
+    );
   }
 
   @Post('password/forgot')
